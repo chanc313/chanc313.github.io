@@ -20,7 +20,7 @@ const { column, entries } = Astro.props;
       <EntryIndex entries={entries} />
     ) : (
       <p class="empty">
-        这个栏目还没有内容。内容文件放在 <code>src/content/{column.id}/</code>。
+        这个栏目还没有内容。每个页面是 <code>src/content/{column.id}/</code> 下的一个文件夹。
       </p>
     )
   }

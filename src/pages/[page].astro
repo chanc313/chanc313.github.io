@@ -1,0 +1,19 @@
+---
+// 独立页面：src/content/pages/ 里每个资源包生成一个 /<页面名>/ 页面，如 /about/
+import { getCollection, render } from 'astro:content';
+import PageLayout from '../layouts/PageLayout.astro';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('pages', ({ data }) =>
+    import.meta.env.PROD ? !data.draft : true,
+  );
+  return pages.map((page) => ({ params: { page: page.id }, props: { page } }));
+}
+
+const { page } = Astro.props;
+const { Content } = await render(page);
+---
+
+<PageLayout title={page.data.title} description={page.data.description}>
+  <Content />
+</PageLayout>

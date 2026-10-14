@@ -31,7 +31,7 @@ tags: [随笔, 建站记录]
 
 ## 发布流程
 
-1. 在对应栏目的内容目录中新建 `.md` 文件，文件名即网址的最后一段
+1. 在对应栏目的内容目录中新建一个文件夹，正文写在其中的 `index.md`，文件夹名即网址的最后一段
 2. 推送到 `main` 分支
 3. GitHub Actions 执行构建，约两分钟后站点更新
 
@@ -61,4 +61,15 @@ function greet(name) {
 }
 ```
 
-图片存放于 `public/images/`，以 `![说明](/images/文件名.jpg)` 引用。
+## 资源
+
+每个页面是一个文件夹（资源包），页面私有的图片、音频、视频与正文放在同一文件夹内，以相对路径引用：
+
+```
+src/content/posts/hello-world/
+├── index.md
+├── photo.jpg      ![说明](./photo.jpg)，构建时自动压缩为 WebP
+└── bgm.mp3        <audio controls src="./bgm.mp3"></audio>
+```
+
+多个页面共用的资源（排版背景图、通用音频等）存放于 `public/`，以根路径引用，如 `/shared/bg.jpg`。

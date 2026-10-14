@@ -33,48 +33,53 @@
 以 id `notes` 为例：
 
 1. `src/columns.ts`：在 `COLUMNS` 中添加一项
-2. `src/content.config.ts`：添加同名集合 `notes`
+2. `src/content.config.ts`：添加同名集合 `notes`，loader 使用 `bundles('./src/content/notes')`
 3. 创建 `src/content/notes/`
 4. 创建 `src/pages/notes/index.astro` 与 `src/pages/notes/[...slug].astro`（结构同 `posts/`）
+
+资源包的发布范围由 `src/columns.ts` 自动推导，无需修改 `astro.config.mjs`。
 
 ## 目录结构
 
 ```
 .
 ├── .github/workflows/deploy.yml     构建与部署流程
-├── public/                          原样复制到站点根目录的静态文件（favicon、图片等）
+├── public/                          全站共用资源，原样复制到站点根目录（favicon、背景图、通用音频等）
 ├── src/
 │   ├── columns.ts                   栏目登记表
 │   ├── content.config.ts            各栏目内容集合的 frontmatter 字段定义
 │   ├── consts.ts                    站点名称、描述、首页介绍文字、外部链接
 │   ├── utils.ts                     内容读取、网址生成、按年分组、标签统计、日期格式化
-│   ├── content/
-│   │   ├── posts/                   栏目「文章」的内容
-│   │   └── chats/                   栏目「AI对话」的内容
+│   ├── content/                     内容：每个页面是一个资源包文件夹（见「资源」）
+│   │   ├── posts/<页面名>/          栏目「文章」
+│   │   ├── chats/<页面名>/          栏目「AI对话」
+│   │   └── pages/<页面名>/          独立页面，如 about/
 │   ├── pages/                       路由：文件路径即网址
 │   │   ├── index.astro              /           全部栏目汇总
 │   │   ├── posts/
 │   │   │   ├── index.astro          /posts/     栏目首页
-│   │   │   └── [...slug].astro      /posts/<文件名>/
+│   │   │   └── [...slug].astro      /posts/<页面名>/
 │   │   ├── chats/
 │   │   │   ├── index.astro          /chats/     栏目首页
-│   │   │   └── [...slug].astro      /chats/<文件名>/
+│   │   │   └── [...slug].astro      /chats/<页面名>/
 │   │   ├── tags/
 │   │   │   ├── index.astro          /tags/
 │   │   │   └── [tag].astro          /tags/<标签>/
-│   │   ├── about.md                 /about/
+│   │   ├── [page].astro             /<页面名>/  独立页面，如 /about/
 │   │   ├── 404.astro                /404.html
 │   │   └── rss.xml.js               /rss.xml    全部栏目
 │   ├── layouts/
 │   │   ├── BaseLayout.astro         全站外壳：<head>、页头、页脚、主题初始化
 │   │   ├── ColumnLayout.astro       栏目首页：栏目名 + 年份目录
 │   │   ├── EntryLayout.astro        内容页：标题、元信息、标签、正文、上一篇/下一篇
-│   │   └── AboutLayout.astro        独立 Markdown 页面
+│   │   └── PageLayout.astro         独立页面：标题 + 正文
 │   ├── components/
 │   │   ├── Header.astro             站名与导航（栏目组 | 独立页面组）
 │   │   ├── Footer.astro             页脚
 │   │   ├── EntryIndex.astro         按年份分组的目录，可标注所属栏目
 │   │   └── ThemeToggle.astro        浅色/深色切换
+│   ├── integrations/
+│   │   └── page-bundles.mjs         Astro 集成：发布资源包中的私有资源
 │   ├── plugins/
 │   │   └── remark-chat-turns.mjs    Markdown 插件：对话记录按发言人分段
 │   └── styles/
@@ -88,11 +93,19 @@
 
 ## 内容
 
-### 文件与网址
+### 资源包与网址
 
-内容文件位于对应栏目的内容目录，文件名决定网址：`src/content/posts/my-post.md` → `/posts/my-post/`。文件名使用英文或拼音，避免网址中出现编码后的中文。
+每个页面是一个文件夹，正文为其中的 `index.md`（或 `index.mdx`），文件夹名决定网址：
 
-### Frontmatter：全部栏目共用字段
+| 资源包 | 网址 |
+|---|---|
+| `src/content/posts/my-post/` | `/posts/my-post/` |
+| `src/content/chats/my-chat/` | `/chats/my-chat/` |
+| `src/content/pages/about/` | `/about/` |
+
+文件夹名使用英文或拼音，避免网址中出现编码后的中文。内容目录根部不允许直接放置 `.md` 文件，构建时报错并提示应放入的文件夹。
+
+### Frontmatter：栏目内容共用字段
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
@@ -136,9 +149,28 @@ tags: [标签]
 
 处理由 `src/plugins/remark-chat-turns.mjs` 完成，输出 `<section class="turn turn-me">` / `<section class="turn turn-ai">`。不使用标题作为发言标记，因为 AI 回答本身常含 Markdown 标题。第一个标记之前的内容按普通正文渲染。
 
-### 图片
+### 资源
 
-放置于 `public/images/`，以根路径引用：`![说明](/images/name.jpg)`。
+| 范围 | 位置 | 引用方式 |
+|---|---|---|
+| 页面私有 | 该页面的资源包文件夹内（可建子文件夹） | 相对路径 `./name.ext` |
+| 全站共用 | `public/` | 根路径 `/name.ext` |
+
+私有资源的处理：
+
+| 引用方式 | 处理 |
+|---|---|
+| Markdown 图片 `![说明](./photo.jpg)` | Astro 图片管线：压缩、转 WebP、带尺寸信息，输出至 `/_astro/`；原图不复制 |
+| 其他相对引用：`<audio src="./a.mp3">`、`<video src="./v.mp4">`、`<img src="./x.png">`、`[下载](./doc.pdf)` 等 | `src/integrations/page-bundles.mjs` 在构建后将文件复制到页面网址下（`/posts/my-post/a.mp3`）；开发服务器直接提供，支持音视频拖动（Range 请求） |
+
+- `draft: true` 页面的资源不进入构建产物。
+- 资源包内的 `.md` 文件与以 `.` 开头的文件不发布。
+- 相对引用依赖网址以 `/` 结尾，已通过 `trailingSlash: 'always'` 统一。
+- GitHub Pages 单文件上限 100MB；大体积视频宜托管于视频平台后嵌入。
+
+### 独立页面 Frontmatter
+
+`src/content/pages/` 中的页面使用：`title`（必填）、`description`、`draft`。
 
 ### 标签
 
