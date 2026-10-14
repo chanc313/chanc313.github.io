@@ -3,6 +3,7 @@
 import { SITE_TITLE } from '../consts';
 import { COLUMNS } from '../columns';
 import ThemeToggle from './ThemeToggle.astro';
+import AdminLink from './AdminLink.astro';
 
 // 导航链接：先是各栏目（来自 src/columns.ts），再是其他独立页面。
 // 想加独立页面，在 pages 数组里加一行。
@@ -43,6 +44,7 @@ const isCurrent = (href: string) => path.startsWith(href);
         ))
       }
     </ul>
+    <AdminLink />
     <ThemeToggle />
   </nav>
 </header>

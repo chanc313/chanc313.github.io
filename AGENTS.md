@@ -16,6 +16,7 @@
 - 组件自己的样式写在组件底部的 `<style>` 里（Astro 会自动限定作用域）；只有全站通用规则才放 `src/styles/global.css`。
 - 正文排版统一用 `.prose` 类；对话记录的每段发言是 `.turn`，内部排版与 `.prose` 共用规则。
 - 尽量不加客户端 JavaScript；需要交互时用组件内的 `<script>`，不依赖第三方库。
+- **博客页面不加载第三方 JavaScript**（CDN 脚本、统计代码、外部组件等）。后台 `/admin/` 与博客同源，后台登录令牌存在同源 localStorage 中，第三方脚本可读取。需要第三方功能（如评论）时，选 iframe 隔离的方案。
 - 代码里的注释用中文，写清楚"这段是干什么的"。
 - **栏目平行**：每个栏目在 `src/columns.ts` 登记，并在 `src/content/<id>/`、`src/pages/<id>/`、`src/content.config.ts` 中各有同名对应。不要让某个栏目独占首页或站点根级网址。新增栏目的步骤见 README。
 - **页面资源包**：每个页面是 `src/content/<集合>/<页面名>/` 文件夹，正文为 `index.md`，页面私有资源（图片、音视频等）放在同一文件夹，用 `./` 相对路径引用。`public/` 只放全站共用资源。不要把某个页面的私有资源放进 `public/`。私有资源的发布由 `src/integrations/page-bundles.mjs` 负责。

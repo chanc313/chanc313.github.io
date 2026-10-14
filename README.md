@@ -78,6 +78,7 @@
 │   │   └── PageLayout.astro         独立页面：标题 + 正文
 │   ├── components/
 │   │   ├── Header.astro             站名与导航（栏目组 | 独立页面组）
+│   │   ├── AdminLink.astro          后台入口，仅已登录后台的浏览器可见
 │   │   ├── Footer.astro             页脚
 │   │   ├── EntryIndex.astro         按年份分组的目录，可标注所属栏目
 │   │   └── ThemeToggle.astro        浅色/深色切换
@@ -187,16 +188,37 @@ Sveltia CMS 在浏览器中运行，通过 GitHub API 读写本仓库。保存�
 
 ### 登录
 
-登录方式为 **Sign In Using Access Token**（个人访问令牌）。未配置 OAuth 授权服务，**Sign In with GitHub** 按钮不可用。
+| 方式 | 状态 | 权限范围 | 说明 |
+|---|---|---|---|
+| Sign In Using Access Token | 可用 | 仅本仓库（细粒度令牌） | 令牌需手动创建，到期后重新生成 |
+| Sign In with GitHub | 待配置 | 全部公开仓库（`auth_scope: public_repo`） | 需部署 Sveltia CMS Authenticator，见下文 |
 
-令牌创建：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+两种方式的登录信息均保存在当前浏览器的 localStorage（键 `sveltia-cms.user`）。令牌泄露时在 GitHub 中撤销。
+
+**细粒度令牌创建**：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
 
 | 设置 | 值 |
 |---|---|
 | Repository access | Only select repositories → `chanc313/chanc313.github.io` |
 | Permissions → Contents | Read and write |
 
-令牌保存在当前浏览器的 localStorage。令牌泄露时在 GitHub 中撤销。
+**GitHub 授权服务（Sveltia CMS Authenticator）**：部署于 Cloudflare Workers，代为完成 GitHub OAuth 授权码交换。
+
+1. 部署：<https://deploy.workers.cloudflare.com/?url=https://github.com/sveltia/sveltia-cms-auth>，得到 `https://sveltia-cms-auth.<子域>.workers.dev`
+2. 注册 GitHub OAuth App：<https://github.com/settings/applications/new>，Authorization callback URL 为 `<Worker 网址>/callback`；生成 Client secret
+3. Cloudflare Worker → Settings → Variables：
+   - `GITHUB_CLIENT_ID`
+   - `GITHUB_CLIENT_SECRET`（加密）
+   - `ALLOWED_DOMAINS` = `chanc313.github.io`
+4. `public/admin/config.yml` 的 `backend` 下添加 `base_url: <Worker 网址>`
+
+### 站点入口
+
+`src/components/AdminLink.astro` 在页头显示「后台」链接，仅当当前浏览器已登录后台（localStorage `sveltia-cms.user` 含令牌）时可见。未登录的浏览器需直接访问 `/admin/`。
+
+### 同源安全约束
+
+后台与博客同源，登录令牌位于同源 localStorage，博客页面上运行的任何脚本均可读取。因此博客页面不加载第三方 JavaScript；需要第三方功能（如评论）时，使用 iframe 隔离的方案。
 
 ### 集合与存储位置
 

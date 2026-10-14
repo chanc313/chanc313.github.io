@@ -1,0 +1,32 @@
+---
+// 后台入口：只对已登录后台的浏览器显示，普通访客看不到。
+//
+// 原理：后台（/admin/，Sveltia CMS）与博客同一个域名，登录后会在浏览器 localStorage 的
+// "sveltia-cms.user" 里保存登录信息。这里只检查其中是否有令牌，有则显示链接；不读取、不使用令牌本身。
+// 没登录过的浏览器，第一次需要手动访问 /admin/。
+//
+// 临时方案，之后重构入口时可整个删除此组件（并删除 Header.astro 中的引用）。
+---
+
+<a class="admin-link" href="/admin/" hidden>后台</a>
+
+<script>
+  try {
+    const user = JSON.parse(localStorage.getItem('sveltia-cms.user') ?? 'null');
+    if (user?.token) {
+      document.querySelector<HTMLAnchorElement>('.admin-link')?.removeAttribute('hidden');
+    }
+  } catch {}
+</script>
+
+<style>
+  .admin-link {
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .admin-link:hover {
+    text-decoration: underline;
+  }
+</style>
