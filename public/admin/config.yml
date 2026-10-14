@@ -5,6 +5,8 @@ backend:
   name: github
   repo: chanc313/chanc313.github.io
   branch: main
+  # GitHub 登录的授权服务（Sveltia CMS Authenticator，部署于 Cloudflare Workers）
+  base_url: https://sveltia-cms-auth.hjchanc313.workers.dev
   # GitHub 登录授权范围：仅公开仓库（默认 repo 会包含全部私有仓库）。本仓库为公开仓库，public_repo 足够
   auth_scope: public_repo
   # 提交说明（出现在 GitHub 提交记录中）

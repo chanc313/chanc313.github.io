@@ -191,7 +191,7 @@ Sveltia CMS 在浏览器中运行，通过 GitHub API 读写本仓库。保存�
 | 方式 | 状态 | 权限范围 | 说明 |
 |---|---|---|---|
 | Sign In Using Access Token | 可用 | 仅本仓库（细粒度令牌） | 令牌需手动创建，到期后重新生成 |
-| Sign In with GitHub | 待配置 | 全部公开仓库（`auth_scope: public_repo`） | 需部署 Sveltia CMS Authenticator，见下文 |
+| Sign In with GitHub | 可用 | 全部公开仓库（`auth_scope: public_repo`） | 经 Sveltia CMS Authenticator 授权；令牌 8 小时过期，过期后重新登录 |
 
 两种方式的登录信息均保存在当前浏览器的 localStorage（键 `sveltia-cms.user`）。令牌泄露时在 GitHub 中撤销。
 
@@ -203,6 +203,15 @@ Sveltia CMS 在浏览器中运行，通过 GitHub API 读写本仓库。保存�
 | Permissions → Contents | Read and write |
 
 **GitHub 授权服务（Sveltia CMS Authenticator）**：部署于 Cloudflare Workers，代为完成 GitHub OAuth 授权码交换。
+
+| 项目 | 值 |
+|---|---|
+| Worker | `https://sveltia-cms-auth.hjchanc313.workers.dev`，代码来自 fork `chanc313/sveltia-cms-auth` |
+| GitHub OAuth App | `chanc313blog`，回调 `https://sveltia-cms-auth.hjchanc313.workers.dev/callback`，启用令牌过期（该授权服务不处理刷新令牌，过期后需重新登录） |
+| 运行时变量 | `GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`、`ALLOWED_DOMAINS`（值为 `chanc313.github.io`，不含协议），均为 Secret 类型；普通 Variable 类型在 Worker 重新构建时会被 `wrangler deploy` 清除 |
+| 自检 | 访问 `<Worker>/auth?provider=github&site_id=chanc313.github.io&scope=public_repo`，应跳转至 GitHub 授权页；空白页表示配置错误，错误信息见页面源代码 |
+
+初次部署步骤：
 
 1. 部署：<https://deploy.workers.cloudflare.com/?url=https://github.com/sveltia/sveltia-cms-auth>，得到 `https://sveltia-cms-auth.<子域>.workers.dev`
 2. 注册 GitHub OAuth App：<https://github.com/settings/applications/new>，Authorization callback URL 为 `<Worker 网址>/callback`；生成 Client secret
