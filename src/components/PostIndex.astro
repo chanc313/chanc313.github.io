@@ -1,0 +1,95 @@
+---
+// 按年份分组的文章目录：年份在左侧栏，文章标题和日期在右侧。
+// 首页和单个标签页都用它。
+import { groupByYear, formatDate, type Post } from '../utils';
+
+interface Props {
+  posts: Post[];
+}
+
+const groups = groupByYear(Astro.props.posts);
+---
+
+<div class="index">
+  {
+    groups.map(([year, posts]) => (
+      <section class="year" aria-labelledby={`y${year}`}>
+        <h2 id={`y${year}`} class="year-label">{year}</h2>
+        <ol class="posts">
+          {posts.map((post) => (
+            <li>
+              <a href={`/blog/${post.id}/`}>{post.data.title}</a>
+              <time datetime={post.data.date.toISOString()}>
+                {formatDate(post.data.date, 'short')}
+              </time>
+              {post.data.draft && <span class="draft">草稿</span>}
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))
+  }
+</div>
+
+<style>
+  .year {
+    display: grid;
+    grid-template-columns: var(--gutter) 1fr;
+    align-items: baseline;
+    padding-block: 1.25rem;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .year-label {
+    margin: 0;
+    font-size: var(--text-xl);
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .posts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding-block: 0.35rem;
+  }
+
+  li a {
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: var(--text-lg);
+  }
+
+  li a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  time {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .draft {
+    flex-shrink: 0;
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+  }
+
+  /* 手机上年份放到上方 */
+  @media (max-width: 36rem) {
+    .year {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+  }
+</style>

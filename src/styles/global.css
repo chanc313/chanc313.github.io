@@ -1,0 +1,205 @@
+/*
+  全站基础样式
+  ------------------------------------------------------------
+  这里只放"所有页面通用"的规则：页面底色、文字、链接、文章正文排版。
+  某个组件自己的样式写在那个组件文件底部的 <style> 里。
+*/
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-selection);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* 页面主体容器 */
+.container {
+  width: 100%;
+  max-width: calc(var(--measure) + 2 * var(--space));
+  margin-inline: auto;
+  padding-inline: var(--space);
+}
+
+/* ---------- 文章正文排版（Markdown 渲染出来的内容） ---------- */
+.prose {
+  overflow-wrap: break-word;
+}
+
+/* 段落间距统一由"相邻元素"规则控制：每个块元素和上一个之间空 1.1 行 */
+.prose > * {
+  margin-block: 0;
+}
+
+.prose > * + * {
+  margin-top: 1.1em;
+}
+
+.prose > h2 {
+  font-size: var(--text-xl);
+  margin-top: 2.2em;
+}
+
+.prose > h3 {
+  font-size: var(--text-lg);
+  margin-top: 1.8em;
+}
+
+.prose > h2 + *,
+.prose > h3 + * {
+  margin-top: 0.6em;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+}
+
+.prose li + li {
+  margin-top: 0.3em;
+}
+
+.prose blockquote {
+  margin-inline: 0;
+  padding: 0.2em 0 0.2em 1.2em;
+  border-left: 3px solid var(--color-rule);
+  color: var(--color-muted);
+}
+
+.prose hr {
+  border: none;
+  text-align: center;
+  margin-block: 2.5em;
+}
+
+.prose hr::after {
+  content: '＊ ＊ ＊';
+  color: var(--color-muted);
+  letter-spacing: 0.5em;
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.prose :not(pre) > code {
+  background: var(--color-surface);
+  padding: 0.12em 0.35em;
+  border-radius: var(--radius);
+}
+
+.prose pre {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  padding: 1em 1.2em;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  background: var(--color-surface) !important;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  display: block;
+  overflow-x: auto;
+}
+
+.prose th,
+.prose td {
+  text-align: left;
+  padding: 0.5em 0.8em;
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.prose img {
+  display: block;
+  margin-inline: auto;
+  border-radius: var(--radius);
+}
+
+/* 代码高亮：浅色/深色两套配色切换 */
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+}
+
+:root[data-theme='dark'] .astro-code,
+:root[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .astro-code,
+  :root:not([data-theme='light']) .astro-code span {
+    color: var(--shiki-dark);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

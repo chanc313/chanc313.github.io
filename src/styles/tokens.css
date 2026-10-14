@@ -1,0 +1,65 @@
+/*
+  设计变量（design tokens）
+  ------------------------------------------------------------
+  全站的颜色、字体、尺寸都集中在这里。想换配色或字体，先改这个文件。
+  浅色在 :root 里，深色在下面两段里（一段跟随系统，一段是手动切换）。
+*/
+
+:root {
+  /* 颜色：浅色主题 */
+  --color-bg: #eef1ec;          /* 纸色：偏青灰的浅底 */
+  --color-surface: #e4e9e3;     /* 稍深一点的底色：代码块、引用 */
+  --color-text: #1f2a2e;        /* 正文：深石板色 */
+  --color-muted: #5e6b6a;       /* 次要文字：日期、说明 */
+  --color-accent: #2b5d8c;      /* 强调色：靛蓝墨水，用于链接 */
+  --color-rule: #cbd3cd;        /* 分隔线 */
+  --color-selection: #c9d9e8;   /* 选中文字的底色 */
+
+  /* 字体 */
+  --font-display: 'LXGW WenKai Screen', 'Kaiti SC', 'STKaiti', 'KaiTi', serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* 字号阶梯（以 1.25 为比例） */
+  --text-sm: 0.875rem;
+  --text-base: 1.0625rem;   /* 17px 正文 */
+  --text-lg: 1.25rem;
+  --text-xl: 1.5625rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: 2.441rem;
+
+  /* 版面 */
+  --measure: 40rem;         /* 正文最大宽度，中文约每行 38 字 */
+  --gutter: 7rem;           /* 首页左侧年份栏宽度 */
+  --space: 1.5rem;          /* 基础间距 */
+  --radius: 4px;
+
+  color-scheme: light;
+}
+
+/* 跟随系统深色模式（用户没手动选过时生效） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg: #161c1f;
+    --color-surface: #1e2629;
+    --color-text: #dce3e0;
+    --color-muted: #8d9a98;
+    --color-accent: #8fb4d9;
+    --color-rule: #2e3a3d;
+    --color-selection: #2c4560;
+    color-scheme: dark;
+  }
+}
+
+/* 用户手动切换到深色 */
+:root[data-theme='dark'] {
+  --color-bg: #161c1f;
+  --color-surface: #1e2629;
+  --color-text: #dce3e0;
+  --color-muted: #8d9a98;
+  --color-accent: #8fb4d9;
+  --color-rule: #2e3a3d;
+  --color-selection: #2c4560;
+  color-scheme: dark;
+}

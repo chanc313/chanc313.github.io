@@ -1,0 +1,152 @@
+---
+// 文章页：根据 src/content/blog/ 里的每个 Markdown 文件生成一个页面
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPosts, formatDate, type Post } from '../../utils';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => ({
+    params: { slug: post.id },
+    // posts 是从新到旧排的：newer 是上一篇（更新），older 是下一篇（更早）
+    props: { post, newer: posts[i - 1], older: posts[i + 1] },
+  }));
+}
+
+interface Props {
+  post: Post;
+  newer?: Post;
+  older?: Post;
+}
+
+const { post, newer, older } = Astro.props;
+const { title, description, date, updated, tags } = post.data;
+const { Content } = await render(post);
+---
+
+<BaseLayout title={title} description={description}>
+  <article>
+    <header class="post-header">
+      <h1>{title}</h1>
+      <p class="meta">
+        <time datetime={date.toISOString()}>{formatDate(date)}</time>
+        {updated && <span>更新于 {formatDate(updated)}</span>}
+      </p>
+      {
+        tags.length > 0 && (
+          <ul class="tags" aria-label="标签">
+            {tags.map((tag) => (
+              <li>
+                <a href={`/tags/${tag}/`}>#{tag}</a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+
+  {
+    (newer || older) && (
+      <nav class="pager" aria-label="上一篇和下一篇">
+        {older ? (
+          <a href={`/blog/${older.id}/`} class="older">
+            <span>更早</span>
+            {older.data.title}
+          </a>
+        ) : (
+          <span />
+        )}
+        {newer && (
+          <a href={`/blog/${newer.id}/`} class="newer">
+            <span>更新</span>
+            {newer.data.title}
+          </a>
+        )}
+      </nav>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .post-header {
+    margin-bottom: 2.5rem;
+  }
+
+  h1 {
+    font-size: var(--text-3xl);
+    margin: 1rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    font-size: var(--text-sm);
+  }
+
+  .tags a {
+    text-decoration: none;
+  }
+
+  .tags a:hover {
+    text-decoration: underline;
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .pager a {
+    display: flex;
+    flex-direction: column;
+    color: var(--color-text);
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    line-height: 1.4;
+  }
+
+  .pager a:hover {
+    color: var(--color-accent);
+  }
+
+  .pager span {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .newer {
+    text-align: right;
+  }
+
+  @media (max-width: 36rem) {
+    h1 {
+      font-size: var(--text-2xl);
+    }
+  }
+</style>

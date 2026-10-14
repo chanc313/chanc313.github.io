@@ -1,0 +1,20 @@
+---
+// "关于"这类独立页面的布局：标题 + 正文。内容写在 src/pages/about.md 里。
+import BaseLayout from './BaseLayout.astro';
+
+const { frontmatter } = Astro.props;
+---
+
+<BaseLayout title={frontmatter.title}>
+  <h1>{frontmatter.title}</h1>
+  <div class="prose">
+    <slot />
+  </div>
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: var(--text-2xl);
+    margin: 1rem 0 2rem;
+  }
+</style>

@@ -1,0 +1,55 @@
+---
+// 全部标签页
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPosts, countTags } from '../../utils';
+
+const tags = countTags(await getPosts());
+---
+
+<BaseLayout title="标签">
+  <h1>标签</h1>
+  {
+    tags.length > 0 ? (
+      <ul class="tag-list">
+        {tags.map(([tag, count]) => (
+          <li>
+            <a href={`/tags/${tag}/`}>{tag}</a>
+            <span>{count} 篇</span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="empty">还没有标签。在文章开头的 tags 里加上就会出现在这里。</p>
+    )
+  }
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: var(--text-2xl);
+    margin: 1rem 0 2rem;
+  }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tag-list a {
+    font-size: var(--text-lg);
+  }
+
+  .tag-list span {
+    margin-left: 0.4rem;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .empty {
+    color: var(--color-muted);
+  }
+</style>

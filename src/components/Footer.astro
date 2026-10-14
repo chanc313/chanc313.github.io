@@ -1,0 +1,36 @@
+---
+// 页脚
+import { AUTHOR, GITHUB_URL } from '../consts';
+const year = new Date().getFullYear();
+---
+
+<footer class="container site-footer">
+  <p>© {year} {AUTHOR}</p>
+  <p>
+    <a href="/rss.xml">RSS 订阅</a>
+    <a href={GITHUB_URL}>GitHub</a>
+  </p>
+</footer>
+
+<style>
+  .site-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    padding-block: 1.5rem 2.5rem;
+    border-top: 1px solid var(--color-rule);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  p {
+    margin: 0;
+    display: flex;
+    gap: 1.25rem;
+  }
+
+  a {
+    color: inherit;
+  }
+</style>
