@@ -2,12 +2,11 @@
 
 网址：<https://chanc313.github.io>
 
-用 [Astro](https://astro.build) 搭建，没有套用现成主题，所有页面和样式都在这个仓库里，可以随意改。
+ [Astro](https://astro.build) 搭建
 
 ## 写文章
 
-1. 在 `src/content/blog/` 里新建一个 `.md` 文件，文件名就是文章网址，比如 `my-first-post.md` 对应 `/blog/my-first-post/`。建议用英文或拼音命名。
-2. 文件开头写上：
+1. 在 `src/content/blog/` 里新建一个 `.md` 文件，文件名是文章网址，比如 `my-first-post.md` 对应 `/blog/my-first-post/`。
 
    ```yaml
    ---
@@ -19,10 +18,10 @@
    ---
    ```
 
-3. 下面用 Markdown 写正文。图片放进 `public/images/`，用 `![说明](/images/文件名.jpg)` 引用。
-4. 提交并推送到 GitHub，大约两分钟后网站自动更新。
+3. 用 Markdown 写正文。图片放进 `public/images/`，用 `![说明](/images/文件名.jpg)` 引用。
+4. 提交并推送到 GitHub，网站自动更新。
 
-不想装任何软件也可以：直接在 GitHub 网页上进入 `src/content/blog/`，点 **Add file → Create new file** 写文章并提交。
+不装任何软件：直接在 GitHub 网页上进入 `src/content/blog/`，点 **Add file → Create new file** 写文章并提交。
 
 ## 在自己电脑上预览
 
@@ -42,11 +41,11 @@ npm run dev
 
 打开 <http://localhost:4321>。改了文件，浏览器会自动刷新。草稿（`draft: true`）只在这里能看到。
 
-## 文件结构：哪里管什么
+## 文件结构：
 
 ```
 src/
-├── content/blog/      ← 文章（你主要只动这里）
+├── content/blog/      ← 文章
 ├── consts.ts          ← 网站名、首页介绍文字、GitHub 链接
 ├── pages/
 │   ├── index.astro    ← 首页
@@ -56,23 +55,23 @@ src/
 ├── layouts/           ← 页面外壳（<head>、页头页脚的组合）
 ├── components/        ← 页头、页脚、文章目录、深色切换按钮
 └── styles/
-    ├── tokens.css     ← 颜色、字体、字号、宽度（改外观先看这里）
+    ├── tokens.css     ← 颜色、字体、字号、宽度
     └── global.css     ← 全站通用样式、文章正文排版
 public/                ← 图片、图标等原样发布的文件
 ```
 
-## 让 AI 帮你改
+## AI-assistant
 
-把这个仓库交给 AI（Claude Code、Cursor 等）时，它会先读 `CLAUDE.md` / `AGENTS.md` 了解项目规则。描述你想要的**效果**就行，不用说怎么实现，例如：
+把这个仓库交给 AI（Claude Code、Cursor 等）时，它会先读 `CLAUDE.md` / `AGENTS.md` 了解项目规则。描述想要的**效果**，不说怎么实现。例如：
 
 - "把强调色换成墨绿色，深色模式也要配套"
 - "首页每篇文章标题下面加一行简介"
 - "文章页加一个目录，长文章才显示"
 - "加一个'读书'页面，列出我读过的书"
 
-改完先 `npm run dev` 看效果，满意再推送。
+改完先 `npm run dev` 看效果。
 
-## 学前端的建议路径
+## 前端学习
 
 不用系统学，按需要一点点来：
 
