@@ -1,5 +1,5 @@
 ---
-title: 你好，世界
+title: Hello, world!
 description: 博客的第一篇文章，也是一份写作格式的示范。
 date: 2026-10-14
 tags: [随笔, 建站]
