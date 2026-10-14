@@ -13,6 +13,7 @@
 | 代码高亮 | Shiki，浅色 `github-light` / 深色 `github-dark` |
 | 字体 | 标题：霞鹜文楷 LXGW WenKai Screen（`lxgw-wenkai-screen-webfont`，自托管，按 unicode-range 分片加载）；正文：系统中文无衬线字体 |
 | 部署 | GitHub Actions → GitHub Pages，推送 `main` 分支触发 |
+| 内容管理后台 | [Sveltia CMS](https://github.com/sveltia/sveltia-cms) 0.237.0，`/admin/`，纯前端，直接读写本仓库 |
 | 运行环境 | Node.js ≥ 22 |
 
 ## 栏目
@@ -45,6 +46,8 @@
 .
 ├── .github/workflows/deploy.yml     构建与部署流程
 ├── public/                          全站共用资源，原样复制到站点根目录（favicon、背景图、通用音频等）
+│   ├── admin/                       内容管理后台：index.html（加载 Sveltia CMS）、config.yml（集合与字段）
+│   └── shared/                      后台上传的全站共用资源（网址 /shared/）
 ├── src/
 │   ├── columns.ts                   栏目登记表
 │   ├── content.config.ts            各栏目内容集合的 frontmatter 字段定义
@@ -175,6 +178,46 @@ tags: [标签]
 ### 标签
 
 标签由全部栏目内容的 `tags` 字段汇总生成，无需单独登记。重命名标签需修改所有使用该标签的内容文件。
+
+## 内容管理后台
+
+地址：<https://chanc313.github.io/admin/>
+
+Sveltia CMS 在浏览器中运行，通过 GitHub API 读写本仓库。保存即提交到 `main`，随后触发自动部署。
+
+### 登录
+
+登录方式为 **Sign In Using Access Token**（个人访问令牌）。未配置 OAuth 授权服务，**Sign In with GitHub** 按钮不可用。
+
+令牌创建：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+
+| 设置 | 值 |
+|---|---|
+| Repository access | Only select repositories → `chanc313/chanc313.github.io` |
+| Permissions → Contents | Read and write |
+
+令牌保存在当前浏览器的 localStorage。令牌泄露时在 GitHub 中撤销。
+
+### 集合与存储位置
+
+| 后台集合 | 存储位置 | 上传的媒体 |
+|---|---|---|
+| 文章 | `src/content/posts/<页面名>/index.md` | 同一文件夹 |
+| AI对话 | `src/content/chats/<页面名>/index.md` | 同一文件夹 |
+| 独立页面 | `src/content/pages/<页面名>/index.md` | 同一文件夹 |
+| 全站媒体库 | — | `public/shared/` |
+
+- 页面名在新建时填写，仅允许 ASCII 字符，保存后不可修改。
+- 删除页面时，后台一并删除该文件夹内的媒体。
+- 后台写入的媒体引用为不带 `./` 的文件名（如 `photo.jpg`），与 `./photo.jpg` 等效。
+
+### 配置同步
+
+`public/admin/config.yml` 的集合与字段需与 `src/content.config.ts` 保持一致。新增栏目或字段时两处同时修改。
+
+### 升级
+
+版本号固定于 `public/admin/index.html` 的脚本网址。升级时修改版本号，于 `/admin/` 验证后提交。
 
 ## 本地开发
 

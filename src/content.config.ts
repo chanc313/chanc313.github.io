@@ -18,14 +18,21 @@ function bundles(base: string) {
   });
 }
 
+/**
+ * 可选字段：空字符串和 null 视为"没填"。
+ * 后台编辑器（Sveltia CMS）可能把留空的可选字段写成 '' 或 null，不处理会导致校验失败。
+ */
+const optional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (v === '' || v === null ? undefined : v), schema.optional());
+
 // 栏目内容共用的字段
 const entry = z.object({
   title: z.string(),
-  description: z.string().optional(),
+  description: optional(z.string()),
   date: z.coerce.date(),
-  updated: z.coerce.date().optional(),
-  tags: z.array(z.string()).default([]),
-  draft: z.boolean().default(false),
+  updated: optional(z.coerce.date()),
+  tags: optional(z.array(z.string())).transform((v) => v ?? []),
+  draft: optional(z.boolean()).transform((v) => v ?? false),
 });
 
 // 栏目：文章
@@ -38,8 +45,8 @@ const posts = defineCollection({
 const chats = defineCollection({
   loader: bundles('./src/content/chats'),
   schema: entry.extend({
-    ai: z.string().default('AI'),   // 对话对象，如 "Claude Opus 5.5"，显示在每段 AI 发言上方
-    note: z.string().optional(),    // 批注：这段对话为什么值得留下，显示在正文之前
+    ai: optional(z.string()).transform((v) => v ?? 'AI'), // 对话对象，如 "Claude Opus 5.5"，显示在每段 AI 发言上方
+    note: optional(z.string()),                             // 批注：这段对话为什么值得留下，显示在正文之前
   }),
 });
 
@@ -48,8 +55,8 @@ const pages = defineCollection({
   loader: bundles('./src/content/pages'),
   schema: z.object({
     title: z.string(),
-    description: z.string().optional(),
-    draft: z.boolean().default(false),
+    description: optional(z.string()),
+    draft: optional(z.boolean()).transform((v) => v ?? false),
   }),
 });
 

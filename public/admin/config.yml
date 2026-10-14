@@ -1,0 +1,96 @@
+# Sveltia CMS 配置：后台有哪些栏目、每个栏目有哪些字段。
+# 字段必须与 src/content.config.ts 中的定义一致；新增栏目时两处同步修改。
+
+backend:
+  name: github
+  repo: chanc313/chanc313.github.io
+  branch: main
+  # 提交说明（出现在 GitHub 提交记录中）
+  commit_messages:
+    create: '新建 {{collection}}：{{slug}}'
+    update: '更新 {{collection}}：{{slug}}'
+    delete: '删除 {{collection}}：{{slug}}'
+    uploadMedia: '上传 {{path}}'
+    deleteMedia: '删除 {{path}}'
+
+# 全站共用资源的上传位置（public/shared/，网址 /shared/）。
+# 各集合把 media_folder 设为 ''，页面私有资源存进该页面自己的文件夹。
+media_folder: public/shared
+public_folder: /shared
+
+# 页面文件夹名（即网址的最后一段）只允许英文字母、数字和连字符
+slug:
+  encoding: ascii
+  clean_accents: true
+  sanitize_replacement: '-'
+
+collections:
+  - name: posts
+    label: 文章
+    label_singular: 文章
+    folder: src/content/posts
+    path: '{{slug}}/index'
+    media_folder: ''
+    public_folder: ''
+    extension: md
+    format: frontmatter
+    create: true
+    # 文件夹名在新建时手动填写（英文或拼音），保存后不可改，避免网址变化
+    slug:
+      editable: [create]
+    sortable_fields: [date, title]
+    summary: '{{title}}（{{date}}）'
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
+      - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
+      - { name: tags, label: 标签, widget: list, required: false, default: [] }
+      - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
+      - { name: body, label: 正文, widget: markdown }
+
+  - name: chats
+    label: AI对话
+    label_singular: 对话
+    folder: src/content/chats
+    path: '{{slug}}/index'
+    media_folder: ''
+    public_folder: ''
+    extension: md
+    format: frontmatter
+    create: true
+    slug:
+      editable: [create]
+    sortable_fields: [date, title]
+    summary: '{{title}}（{{date}}）'
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: date, label: 日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
+      - { name: ai, label: 对话对象, widget: string, default: Claude, hint: 如 Claude Opus 5.5 }
+      - { name: note, label: 批注, widget: text, required: false, hint: 这段对话为什么值得留下 }
+      - { name: description, label: 摘要, widget: text, required: false }
+      - { name: tags, label: 标签, widget: list, required: false, default: [] }
+      - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false }
+      - name: body
+        label: 对话内容
+        widget: markdown
+        hint: 单独一行 @me 或 @ai 标记每段发言的开始
+
+  - name: pages
+    label: 独立页面
+    label_singular: 页面
+    folder: src/content/pages
+    path: '{{slug}}/index'
+    media_folder: ''
+    public_folder: ''
+    extension: md
+    format: frontmatter
+    create: true
+    slug:
+      editable: [create]
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: description, label: 摘要, widget: text, required: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false }
+      - { name: body, label: 正文, widget: markdown }

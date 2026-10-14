@@ -119,12 +119,16 @@ function isDraft(indexFile) {
  */
 function imageOnlyRefs(indexFile) {
   const text = readFileSync(indexFile, 'utf-8');
+  // Markdown 图片里的相对路径：./photo.jpg 或 photo.jpg（CMS 写入的是后者）；排除 / 开头和网址
+  const imageRef = /!\[[^\]]*\]\(<?(?:\.\/)?((?![a-z]+:|\/)[^)\s>]+)/gi;
+  const asImage = new Map();
+  for (const [, ref] of text.matchAll(imageRef)) asImage.set(ref, (asImage.get(ref) ?? 0) + 1);
+
   const result = new Set();
-  for (const [, ref] of text.matchAll(/!\[[^\]]*\]\(<?\.\/([^)\s>]+)>?(?:\s+"[^"]*")?\)/g)) {
-    const path = decodeURI(ref);
-    const total = text.split(`./${ref}`).length - 1;
-    const asImage = [...text.matchAll(/!\[[^\]]*\]\(<?\.\/([^)\s>]+)/g)].filter((m) => m[1] === ref).length;
-    if (total === asImage) result.add(path);
+  for (const [ref, count] of asImage) {
+    // 文件名在全文中出现的次数等于作为图片出现的次数，说明没有别处引用
+    const total = text.split(ref).length - 1;
+    if (total === count) result.add(decodeURI(ref));
   }
   return result;
 }
