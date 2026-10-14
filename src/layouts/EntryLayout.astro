@@ -1,36 +1,31 @@
 ---
-// 文章页：根据 src/content/blog/ 里的每个 Markdown 文件生成一个页面
-import { render } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getPosts, formatDate, type Post } from '../../utils';
-
-export async function getStaticPaths() {
-  const posts = await getPosts();
-  return posts.map((post, i) => ({
-    params: { slug: post.id },
-    // posts 是从新到旧排的：newer 是上一篇（更新），older 是下一篇（更早）
-    props: { post, newer: posts[i - 1], older: posts[i + 1] },
-  }));
-}
+// 单条内容页面的布局：标题、日期、标签、正文、上一篇/下一篇。
+// 所有栏目的内容页共用；栏目各自的差异通过两个插槽补充：
+//   slot="meta"   日期后面追加的信息（如对话对象）
+//   slot="intro"  标题区与正文之间的内容（如对话批注）
+import BaseLayout from './BaseLayout.astro';
+import { formatDate, entryUrl, type Entry } from '../utils';
 
 interface Props {
-  post: Post;
-  newer?: Post;
-  older?: Post;
+  entry: Entry;
+  newer?: Entry;
+  older?: Entry;
+  /** 加在正文容器上的额外 class，供栏目定制正文样式 */
+  bodyClass?: string;
 }
 
-const { post, newer, older } = Astro.props;
-const { title, description, date, updated, tags } = post.data;
-const { Content } = await render(post);
+const { entry, newer, older, bodyClass } = Astro.props;
+const { title, description, date, updated, tags } = entry.data;
 ---
 
 <BaseLayout title={title} description={description}>
   <article>
-    <header class="post-header">
+    <header class="entry-header">
       <h1>{title}</h1>
       <p class="meta">
         <time datetime={date.toISOString()}>{formatDate(date)}</time>
         {updated && <span>更新于 {formatDate(updated)}</span>}
+        <slot name="meta" />
       </p>
       {
         tags.length > 0 && (
@@ -45,16 +40,18 @@ const { Content } = await render(post);
       }
     </header>
 
-    <div class="prose">
-      <Content />
+    <slot name="intro" />
+
+    <div class:list={['prose', bodyClass]}>
+      <slot />
     </div>
   </article>
 
   {
     (newer || older) && (
-      <nav class="pager" aria-label="上一篇和下一篇">
+      <nav class="pager" aria-label="同栏目的上一篇和下一篇">
         {older ? (
-          <a href={`/blog/${older.id}/`} class="older">
+          <a href={entryUrl(older)} class="older">
             <span>更早</span>
             {older.data.title}
           </a>
@@ -62,7 +59,7 @@ const { Content } = await render(post);
           <span />
         )}
         {newer && (
-          <a href={`/blog/${newer.id}/`} class="newer">
+          <a href={entryUrl(newer)} class="newer">
             <span>更新</span>
             {newer.data.title}
           </a>
@@ -73,7 +70,7 @@ const { Content } = await render(post);
 </BaseLayout>
 
 <style>
-  .post-header {
+  .entry-header {
     margin-bottom: 2.5rem;
   }
 

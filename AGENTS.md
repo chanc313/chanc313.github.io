@@ -7,16 +7,19 @@
 - 负责写内容，前端由 AI 协助完成。能看懂 CSS/JS 的意图，但没有系统学过前端，正在边做边学。
 - 修改代码后，用简短中文说明改了哪些文件、为什么这样改，帮助他学习。不要只给结果。
 - 网站界面文字用中文。
+- **技术上不合理的要求，直接质疑、提出建议或反驳，不做不合理的技术妥协**，除非博客主人明确要求按原样执行。
 
 ## 项目约定
 
 - **不引入 UI 框架**（React、Vue、Tailwind 等）。页面用 `.astro` 组件 + 原生 CSS 写成，保持每一行都容易读懂。真的需要时先说明理由。
 - **颜色、字体、尺寸只在 `src/styles/tokens.css` 里定义**，其他地方用 `var(--...)` 引用，不写死色值。新增颜色时，浅色和两段深色规则都要补上。
 - 组件自己的样式写在组件底部的 `<style>` 里（Astro 会自动限定作用域）；只有全站通用规则才放 `src/styles/global.css`。
-- 文章正文排版统一用 `.prose` 类。
+- 正文排版统一用 `.prose` 类；对话记录的每段发言是 `.turn`，内部排版与 `.prose` 共用规则。
 - 尽量不加客户端 JavaScript；需要交互时用组件内的 `<script>`，不依赖第三方库。
 - 代码里的注释用中文，写清楚"这段是干什么的"。
-- 文章是 `src/content/blog/*.md`，格式在 `src/content.config.ts` 定义。改格式时同步更新 README 里的说明。
+- **栏目平行**：每个栏目在 `src/columns.ts` 登记，并在 `src/content/<id>/`、`src/pages/<id>/`、`src/content.config.ts` 中各有同名对应。不要让某个栏目独占首页或站点根级网址。新增栏目的步骤见 README。
+- 内容格式在 `src/content.config.ts` 定义。改格式时同步更新 README 里的说明。
+- Markdown 用 unified（remark/rehype）管线处理（`astro.config.mjs` 中的 `processor: unified(...)`）。自定义 Markdown 处理写成 remark/rehype 插件，放在 `src/plugins/`。
 - 全站文字设置（站名、首页介绍）在 `src/consts.ts`。
 - `README.md` 是客观的技术记录：陈述句，说明"是什么、在哪里、怎么用"，不用第二人称、不用对话或劝说口吻。结构或功能变化时同步更新。
 

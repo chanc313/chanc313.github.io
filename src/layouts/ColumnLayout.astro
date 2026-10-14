@@ -1,0 +1,38 @@
+---
+// 栏目首页的布局：栏目名 + 按年份排列的目录。各栏目的 index.astro 共用。
+import BaseLayout from './BaseLayout.astro';
+import EntryIndex from '../components/EntryIndex.astro';
+import type { Column } from '../columns';
+import type { Entry } from '../utils';
+
+interface Props {
+  column: Column;
+  entries: Entry[];
+}
+
+const { column, entries } = Astro.props;
+---
+
+<BaseLayout title={column.label} description={column.description}>
+  <h1>{column.label}</h1>
+  {
+    entries.length > 0 ? (
+      <EntryIndex entries={entries} />
+    ) : (
+      <p class="empty">
+        这个栏目还没有内容。内容文件放在 <code>src/content/{column.id}/</code>。
+      </p>
+    )
+  }
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: var(--text-2xl);
+    margin: 1rem 0 2rem;
+  }
+
+  .empty {
+    color: var(--color-muted);
+  }
+</style>

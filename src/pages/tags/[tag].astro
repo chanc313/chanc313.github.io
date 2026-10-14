@@ -1,29 +1,29 @@
 ---
-// 单个标签页：列出带这个标签的所有文章
+// 单个标签页：列出所有栏目中带这个标签的内容，并标出所属栏目
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostIndex from '../../components/PostIndex.astro';
-import { getPosts, countTags, type Post } from '../../utils';
+import EntryIndex from '../../components/EntryIndex.astro';
+import { getAllEntries, countTags, type Entry } from '../../utils';
 
 export async function getStaticPaths() {
-  const posts = await getPosts();
-  return countTags(posts).map(([tag]) => ({
+  const entries = await getAllEntries();
+  return countTags(entries).map(([tag]) => ({
     params: { tag },
-    props: { posts: posts.filter((p) => p.data.tags.includes(tag)) },
+    props: { entries: entries.filter((e) => e.data.tags.includes(tag)) },
   }));
 }
 
 interface Props {
-  posts: Post[];
+  entries: Entry[];
 }
 
 const { tag } = Astro.params;
-const { posts } = Astro.props;
+const { entries } = Astro.props;
 ---
 
 <BaseLayout title={`#${tag}`}>
   <h1>#{tag}</h1>
-  <p class="count">共 {posts.length} 篇。<a href="/tags/">查看全部标签</a></p>
-  <PostIndex posts={posts} />
+  <p class="count">共 {entries.length} 条。<a href="/tags/">查看全部标签</a></p>
+  <EntryIndex entries={entries} showColumn />
 </BaseLayout>
 
 <style>

@@ -1,9 +1,9 @@
 ---
-// 全部标签页
+// 全部标签页：汇总所有栏目内容的标签
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getPosts, countTags } from '../../utils';
+import { getAllEntries, countTags } from '../../utils';
 
-const tags = countTags(await getPosts());
+const tags = countTags(await getAllEntries());
 ---
 
 <BaseLayout title="标签">
@@ -14,12 +14,12 @@ const tags = countTags(await getPosts());
         {tags.map(([tag, count]) => (
           <li>
             <a href={`/tags/${tag}/`}>{tag}</a>
-            <span>{count} 篇</span>
+            <span>{count}</span>
           </li>
         ))}
       </ul>
     ) : (
-      <p class="empty">还没有标签。在文章开头的 tags 里加上就会出现在这里。</p>
+      <p class="empty">还没有标签。</p>
     )
   }
 </BaseLayout>

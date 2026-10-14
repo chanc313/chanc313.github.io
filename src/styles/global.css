@@ -84,27 +84,28 @@ img {
   overflow-wrap: break-word;
 }
 
-/* 段落间距统一由"相邻元素"规则控制：每个块元素和上一个之间空 1.1 行 */
-.prose > * {
+/* 段落间距统一由"相邻元素"规则控制：每个块元素和上一个之间空 1.1 行。
+   .turn 是对话记录里的一段发言，内部排版与正文相同 */
+:is(.prose, .turn) > * {
   margin-block: 0;
 }
 
-.prose > * + * {
+:is(.prose, .turn) > * + * {
   margin-top: 1.1em;
 }
 
-.prose > h2 {
+:is(.prose, .turn) > h2 {
   font-size: var(--text-xl);
   margin-top: 2.2em;
 }
 
-.prose > h3 {
+:is(.prose, .turn) > h3 {
   font-size: var(--text-lg);
   margin-top: 1.8em;
 }
 
-.prose > h2 + *,
-.prose > h3 + * {
+:is(.prose, .turn) > h2 + *,
+:is(.prose, .turn) > h3 + * {
   margin-top: 0.6em;
 }
 
@@ -171,10 +172,41 @@ img {
   border-bottom: 1px solid var(--color-rule);
 }
 
+/* 表头不折行，避免窄屏上逐字断开 */
+.prose th {
+  white-space: nowrap;
+}
+
 .prose img {
   display: block;
   margin-inline: auto;
   border-radius: var(--radius);
+}
+
+/* ---------- 对话记录（AI对话栏目，结构由 src/plugins/remark-chat-turns.mjs 生成） ---------- */
+.chat > .turn + .turn {
+  margin-top: 2.25em;
+}
+
+/* 发言人名称 */
+.chat .turn-label {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.turn > .turn-label + * {
+  margin-top: 0.3em;
+}
+
+/* "我"的发言加底色，与 AI 的回答区分 */
+.chat .turn-me {
+  padding: 1em 1.2em;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+}
+
+.chat .turn-me pre {
+  background: var(--color-bg) !important;
 }
 
 /* 代码高亮：浅色/深色两套配色切换 */

@@ -1,0 +1,10 @@
+---
+// "文章"栏目首页：/posts/
+import ColumnLayout from '../../layouts/ColumnLayout.astro';
+import { getColumn } from '../../columns';
+import { getEntries } from '../../utils';
+
+const entries = await getEntries('posts');
+---
+
+<ColumnLayout column={getColumn('posts')} entries={entries} />

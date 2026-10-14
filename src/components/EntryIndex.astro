@@ -1,28 +1,32 @@
 ---
-// 按年份分组的文章目录：年份在左侧栏，文章标题和日期在右侧。
-// 首页和单个标签页都用它。
-import { groupByYear, formatDate, type Post } from '../utils';
+// 按年份分组的目录：年份在左侧栏，标题和日期在右侧。
+// 首页、各栏目首页、标签页共用。
+// showColumn 为 true 时，在标题后标出所属栏目（混合多个栏目时使用）。
+import { groupByYear, formatDate, entryUrl, columnOf, type Entry } from '../utils';
 
 interface Props {
-  posts: Post[];
+  entries: Entry[];
+  showColumn?: boolean;
 }
 
-const groups = groupByYear(Astro.props.posts);
+const { entries, showColumn = false } = Astro.props;
+const groups = groupByYear(entries);
 ---
 
 <div class="index">
   {
-    groups.map(([year, posts]) => (
+    groups.map(([year, items]) => (
       <section class="year" aria-labelledby={`y${year}`}>
         <h2 id={`y${year}`} class="year-label">{year}</h2>
-        <ol class="posts">
-          {posts.map((post) => (
+        <ol class="entries">
+          {items.map((entry) => (
             <li>
-              <a href={`/blog/${post.id}/`}>{post.data.title}</a>
-              <time datetime={post.data.date.toISOString()}>
-                {formatDate(post.data.date, 'short')}
+              <a href={entryUrl(entry)}>{entry.data.title}</a>
+              {showColumn && <span class="column">{columnOf(entry).label}</span>}
+              {entry.data.draft && <span class="draft">草稿</span>}
+              <time datetime={entry.data.date.toISOString()}>
+                {formatDate(entry.data.date, 'short')}
               </time>
-              {post.data.draft && <span class="draft">草稿</span>}
             </li>
           ))}
         </ol>
@@ -47,7 +51,7 @@ const groups = groupByYear(Astro.props.posts);
     font-variant-numeric: tabular-nums;
   }
 
-  .posts {
+  .entries {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -56,7 +60,7 @@ const groups = groupByYear(Astro.props.posts);
   li {
     display: flex;
     align-items: baseline;
-    gap: 1rem;
+    gap: 0.75rem;
     padding-block: 0.35rem;
   }
 
@@ -71,18 +75,26 @@ const groups = groupByYear(Astro.props.posts);
     text-decoration: underline;
   }
 
+  .column,
+  .draft {
+    flex-shrink: 0;
+    font-size: var(--text-sm);
+  }
+
+  .column {
+    color: var(--color-muted);
+  }
+
+  .draft {
+    color: var(--color-accent);
+  }
+
   time {
     margin-left: auto;
     flex-shrink: 0;
     font-size: var(--text-sm);
     color: var(--color-muted);
     font-variant-numeric: tabular-nums;
-  }
-
-  .draft {
-    flex-shrink: 0;
-    font-size: var(--text-sm);
-    color: var(--color-accent);
   }
 
   /* 手机上年份放到上方 */

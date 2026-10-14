@@ -1,22 +1,20 @@
 ---
-// 首页：一句大字介绍 + 按年份排列的全部文章
+// 首页：一句大字介绍 + 所有栏目的内容按年份汇总，每条标出所属栏目
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PostIndex from '../components/PostIndex.astro';
+import EntryIndex from '../components/EntryIndex.astro';
 import { HOME_INTRO } from '../consts';
-import { getPosts } from '../utils';
+import { getAllEntries } from '../utils';
 
-const posts = await getPosts();
+const entries = await getAllEntries();
 ---
 
 <BaseLayout>
   <h1 class="intro">{HOME_INTRO}</h1>
   {
-    posts.length > 0 ? (
-      <PostIndex posts={posts} />
+    entries.length > 0 ? (
+      <EntryIndex entries={entries} showColumn />
     ) : (
-      <p class="empty">
-        还没有文章。在 <code>src/content/blog/</code> 里新建一个 <code>.md</code> 文件，就是第一篇。
-      </p>
+      <p class="empty">还没有内容。</p>
     )
   }
 </BaseLayout>
