@@ -1,291 +1,170 @@
 # chanc313.github.io
 
-个人博客。站点地址：<https://chanc313.github.io>
+chanc313 的个人博客：<https://chanc313.github.io>
 
-## 技术栈
+本文件是写给博客主人的项目汇报，说明网站现在是什么样、由哪些部分组成、哪些地方需要注意。网站由 AI 搭建和维护，AI 遵守的技术规范与维护步骤在 [`AGENTS.md`](AGENTS.md)。
 
-| 项目 | 说明 |
+## 当前状态
+
+| 项目 | 状态 |
 |---|---|
-| 框架 | [Astro](https://astro.build) 7，输出纯静态 HTML |
-| Markdown 处理 | unified（remark/rehype），经 `@astrojs/markdown-remark`；未使用 Astro 7 默认的 Sätteri |
-| 样式 | 原生 CSS，设计变量集中于 `src/styles/tokens.css`；未使用 UI 框架 |
-| 内容 | Markdown，经 Astro Content Collections 校验 |
-| 代码高亮 | Shiki，浅色 `github-light` / 深色 `github-dark` |
-| 字体 | 标题：霞鹜文楷 LXGW WenKai Screen（`lxgw-wenkai-screen-webfont`，自托管，按 unicode-range 分片加载）；正文：系统中文无衬线字体 |
-| 部署 | GitHub Actions → GitHub Pages，推送 `main` 分支触发 |
-| 内容管理后台 | [Sveltia CMS](https://github.com/sveltia/sveltia-cms) 0.237.0，`/admin/`，纯前端，直接读写本仓库 |
-| 运行环境 | Node.js ≥ 22 |
+| 上线 | 2026-10-14，GitHub Pages |
+| 栏目 | 文章（1 篇）、AI对话（1 篇） |
+| 独立页面 | 关于（正文仍是占位文字） |
+| 内容后台 | `/admin/` 可用，支持 GitHub 登录与访问令牌登录 |
+| 自动检查 | 每次构建检查网站结构；PR 合并前自动构建一次 |
 
-## 栏目
+### 待处理
 
-站点内容划分为平行栏目。每个栏目在三处各有一个同名位置：内容集合、内容目录、页面目录。
-
-| 栏目 | id | 内容目录 | 页面目录 | 网址 |
-|---|---|---|---|---|
-| 文章 | `posts` | `src/content/posts/` | `src/pages/posts/` | `/posts/` |
-| AI对话 | `chats` | `src/content/chats/` | `src/pages/chats/` | `/chats/` |
-
-栏目登记于 `src/columns.ts`。导航、首页汇总、标签页与 RSS 从该文件读取栏目列表。
-
-首页按年份汇总全部栏目内容并标注所属栏目。标签跨栏目生效。
-
-### 新增栏目
-
-以 id `notes` 为例：
-
-1. `src/columns.ts`：在 `COLUMNS` 中添加一项
-2. `src/content.config.ts`：添加同名集合 `notes`，loader 使用 `bundles('./src/content/notes')`
-3. 创建 `src/content/notes/`
-4. 创建 `src/pages/notes/index.astro` 与 `src/pages/notes/[...slug].astro`（结构同 `posts/`）
-5. `public/admin/config.yml`：添加 `folder: src/content/notes` 的集合（字段与第 2 步一致）
-
-资源包的发布范围由 `src/columns.ts` 自动推导，无需修改 `astro.config.mjs`。
-
-### 结构检查
-
-`src/integrations/structure-check.mjs` 在 `npm run dev` 与 `npm run build` 启动时检查以下各项，不通过则报错并列出全部问题：
-
-| 检查项 | 不检查时的后果 |
+| 事项 | 说明 |
 |---|---|
-| 每个栏目有 `src/pages/<id>/index.astro` 与 `[...slug].astro` | 导航链接 404 |
-| `public/admin/config.yml` 含每个栏目及 `pages` 的集合（按 `folder: src/content/<id>` 匹配） | 后台缺少该栏目 |
-| `src/content/` 下每个目录均为已登记栏目或 `pages` | 目录中的内容不生成页面 |
-| 独立页面名不与站点根目录已有网址重名（`src/pages/` 与 `public/` 的顶层名称、`_astro`） | Astro 仅输出警告并跳过该页面 |
+| 「关于」页正文 | 仍是占位文字，需要博客主人提供内容 |
+| 页头「后台」链接 | 临时方案（`src/components/AdminLink.astro`），只在登录过后台的浏览器显示 |
+| 导航里的独立页面 | 「标签」「关于」两个链接写在 `src/components/Header.astro` 中；在后台新建的独立页面不会自动进入导航，需要时可加一个「显示在导航」字段 |
 
-后台字段与 `src/content.config.ts` 的逐项一致性不在检查范围内。
+## 网站结构（读者看到的）
 
-## 目录结构
+| 网址 | 内容 |
+|---|---|
+| `/` | 一句大字介绍 + 全部栏目的内容，按年份排列，每条标注所属栏目 |
+| `/posts/` | 栏目「文章」的目录 |
+| `/posts/<页面名>/` | 一篇文章 |
+| `/chats/` | 栏目「AI对话」的目录 |
+| `/chats/<页面名>/` | 一段对话记录：按「我 / AI」分段显示，正文前可有一段批注 |
+| `/tags/`、`/tags/<标签>/` | 全部标签；某个标签下的所有内容（跨栏目） |
+| `/about/` 等 | 独立页面，不属于任何栏目 |
+| `/rss.xml` | RSS 订阅，包含全部栏目 |
+| `/admin/` | 内容管理后台（不对搜索引擎公开） |
+
+页面外观：单栏、正文宽约 40rem、青灰纸色底与靛蓝强调色，支持浅色 / 深色切换，手机宽度下自动调整排版。标题用霞鹜文楷，正文用系统字体。
+
+## 架构
+
+```
+ 内容（Markdown）          规则与登记                 页面模板                 发布
+ ─────────────────       ─────────────────       ─────────────────       ─────────────
+ src/content/posts/  ┐   src/columns.ts          src/pages/   网址与页面一一对应
+ src/content/chats/  ├─▶ 栏目登记表          ─▶   src/layouts/ 页面骨架          ─▶ GitHub Actions
+ src/content/pages/  ┘   src/content.config.ts   src/components/ 页头、目录等       构建并发布到
+                         每类内容可填的字段       src/styles/  颜色、字体、排版        GitHub Pages
+```
+
+- **内容与代码分开。** 文字和图片只放在 `src/content/`；改内容不需要碰代码，改外观也不需要碰内容。
+- **一张栏目登记表。** `src/columns.ts` 列出全部栏目。导航、首页汇总、标签、RSS、资源发布都读这张表，新增栏目时它们自动跟上。
+- **三层页面骨架。** 全站外壳（页头、页脚、深色模式）→ 栏目目录页 / 内容页 / 独立页面。所有栏目共用同一套内容页骨架，栏目之间的差别（如 AI对话 的批注）在各自的页面文件里补充。
+- **外观集中管理。** 颜色、字体、尺寸只在 `src/styles/tokens.css` 定义一次，换配色只改这一个文件。
+- **不依赖框架。** 页面由 Astro 在构建时生成纯 HTML，样式是原生 CSS，浏览器端只有几段很短的脚本（深色模式切换、后台入口）。不使用 React、Vue、Tailwind 等 UI 框架。
+
+| 技术 | 用途 |
+|---|---|
+| [Astro](https://astro.build) 7 | 把 Markdown 和模板生成静态网页 |
+| unified（remark / rehype） | Markdown 处理；对话分段等自定义规则写成插件，在 `src/plugins/` |
+| Sveltia CMS 0.237.0 | 网页版内容后台，直接读写本仓库 |
+| GitHub Actions + GitHub Pages | 自动构建与托管 |
+
+## 内容的组织规则
+
+### 栏目、独立页面、标签
+
+| 类型 | 是什么 | 例子 |
+|---|---|---|
+| 栏目 | 一类按日期排列的内容，有自己的目录页，进入首页汇总和 RSS | 文章、AI对话 |
+| 独立页面 | 不按日期排列的单页，网址在站点根目录 | 关于 |
+| 标签 | 跨栏目的分类，由内容里的 `tags` 自动汇总，无需登记 | 建站记录、随笔 |
+
+栏目之间是平行关系，没有哪个栏目独占首页。新开栏目由 AI 按 `AGENTS.md` 中的步骤完成，涉及五处文件；漏改任何一处，构建会直接报错并指出缺什么。
+
+### 每个页面是一个文件夹
+
+```
+src/content/posts/hello-world/
+├── index.md      正文
+├── cover.jpg     这个页面自己的图片、音频、视频、PDF……
+└── bgm.mp3
+```
+
+文件夹名就是网址的最后一段（`/posts/hello-world/`）。页面私有的素材与正文放在同一个文件夹，删除页面时素材一起删除。全站共用的素材放在 `public/`，后台上传的共用素材在 `public/shared/`（网址 `/shared/`）。
+
+### 每篇内容可填的信息
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| 标题 | 是 | |
+| 日期 | 是 | 决定排序与年份分组 |
+| 摘要 | 否 | 用于搜索引擎与 RSS |
+| 标签 | 否 | |
+| 更新日期 | 否 | |
+| 草稿 | 否 | 勾选后不发布，素材也不发布 |
+| 对话对象 | 否 | 仅 AI对话，如 `Claude Opus 5.5` |
+| 批注 | 否 | 仅 AI对话，说明这段对话为什么值得留下 |
+
+对话记录用单独一行的 `@me` / `@ai` 标出每段发言的开始。字段缺失或格式不对时，构建失败并指出是哪个文件、哪个字段。
+
+## 内容如何发布
+
+```
+后台 /admin/ 保存 ─┐
+                   ├─▶ 提交到 main 分支 ─▶ 自动构建（通常一两分钟）─▶ 网站更新
+AI 的 PR 被合并  ──┘
+```
+
+- **后台保存即发布。** 后台的每次保存直接提交到 `main`，不经过 PR 检查。如果某次保存导致构建失败，网站停留在上一个版本，不会出现坏页面；失败记录在仓库的 Actions 页面。
+- **AI 的改动走 PR。** PR 会先构建一次（只构建不发布），通过后再合并。
+- **仓库是唯一的内容来源。** Notion 等外部素材由 AI 改写成博客后放入仓库，网站不引用外部平台的文件链接。
+
+## 注意事项
+
+| 事项 | 原因 |
+|---|---|
+| 页面文件夹名建好后不要改 | 文件夹名即网址，改名后旧链接失效。后台已禁止修改 |
+| 独立页面不能与已有网址重名，如 `tags`、`admin`、`posts` | 重名的页面会被跳过。构建会报错拦下 |
+| 单个文件不超过 100MB | GitHub Pages 的限制；大视频宜放视频平台后嵌入 |
+| 博客页面不加载第三方脚本（统计代码、外部组件等） | 后台登录令牌存在浏览器里，与博客同域名，第三方脚本能读到。评论等功能需选用隔离在 iframe 里的方案 |
+| 后台登录令牌泄露时，到 GitHub 撤销 | 令牌有本仓库（访问令牌方式）或全部公开仓库（GitHub 登录方式）的写权限 |
+
+## 外部账号与服务
+
+网站本身只依赖 GitHub。后台的「GitHub 登录」额外依赖以下服务，均在博客主人的账号下：
+
+| 服务 | 作用 | 位置 |
+|---|---|---|
+| Cloudflare Worker | 代为完成 GitHub 登录授权 | `https://sveltia-cms-auth.hjchanc313.workers.dev`，代码来自 fork `chanc313/sveltia-cms-auth` |
+| GitHub OAuth App | 登录授权的应用 | `chanc313blog`，回调 `<Worker 网址>/callback` |
+
+- Worker 的三个设置 `GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`、`ALLOWED_DOMAINS`（值为 `chanc313.github.io`）必须设为 Secret 类型；普通类型在 Worker 重新部署时会被清空。
+- GitHub 登录的令牌 8 小时过期，过期后重新登录即可。
+- 不想依赖 Worker 时，可改用「Sign In Using Access Token」：在 GitHub → Settings → Developer settings → Fine-grained tokens 创建令牌，仓库只选 `chanc313/chanc313.github.io`，权限 Contents 设为 Read and write。
+- Worker 的初次部署与自检步骤见 `AGENTS.md`「后台登录服务」。
+
+## 文件位置
 
 ```
 .
-├── .github/workflows/deploy.yml     构建与部署流程
-├── public/                          全站共用资源，原样复制到站点根目录（favicon、背景图、通用音频等）
-│   ├── admin/                       内容管理后台：index.html（加载 Sveltia CMS）、config.yml（集合与字段）
-│   └── shared/                      后台上传的全站共用资源（网址 /shared/）
 ├── src/
-│   ├── columns.ts                   栏目登记表
-│   ├── content.config.ts            各栏目内容集合的 frontmatter 字段定义
-│   ├── consts.ts                    站点名称、描述、首页介绍文字、外部链接
-│   ├── utils.ts                     内容读取、网址生成、按年分组、标签统计、日期格式化
-│   ├── content/                     内容：每个页面是一个资源包文件夹（见「资源」）
-│   │   ├── posts/<页面名>/          栏目「文章」
-│   │   ├── chats/<页面名>/          栏目「AI对话」
-│   │   └── pages/<页面名>/          独立页面，如 about/
-│   ├── pages/                       路由：文件路径即网址
-│   │   ├── index.astro              /           全部栏目汇总
-│   │   ├── posts/
-│   │   │   ├── index.astro          /posts/     栏目首页
-│   │   │   └── [...slug].astro      /posts/<页面名>/
-│   │   ├── chats/
-│   │   │   ├── index.astro          /chats/     栏目首页
-│   │   │   └── [...slug].astro      /chats/<页面名>/
-│   │   ├── tags/
-│   │   │   ├── index.astro          /tags/
-│   │   │   └── [tag].astro          /tags/<标签>/
-│   │   ├── [page].astro             /<页面名>/  独立页面，如 /about/
-│   │   ├── 404.astro                /404.html
-│   │   └── rss.xml.js               /rss.xml    全部栏目
-│   ├── layouts/
-│   │   ├── BaseLayout.astro         全站外壳：<head>、页头、页脚、主题初始化
-│   │   ├── ColumnLayout.astro       栏目首页：栏目名 + 年份目录
-│   │   ├── EntryLayout.astro        内容页：标题、元信息、标签、正文、上一篇/下一篇
-│   │   └── PageLayout.astro         独立页面：标题 + 正文
-│   ├── components/
-│   │   ├── Header.astro             站名与导航（栏目组 | 独立页面组）
-│   │   ├── AdminLink.astro          后台入口，仅已登录后台的浏览器可见
-│   │   ├── Footer.astro             页脚
-│   │   ├── EntryIndex.astro         按年份分组的目录，可标注所属栏目
-│   │   └── ThemeToggle.astro        浅色/深色切换
-│   ├── integrations/
-│   │   ├── page-bundles.mjs         Astro 集成：发布资源包中的私有资源
-│   │   └── structure-check.mjs      Astro 集成：启动时检查栏目文件、后台配置与网址冲突
-│   ├── plugins/
-│   │   └── remark-chat-turns.mjs    Markdown 插件：对话记录按发言人分段
-│   └── styles/
-│       ├── tokens.css               设计变量：颜色、字体、字号、版心宽度
-│       └── global.css               全站基础样式、`.prose` 正文排版、对话记录样式
-├── astro.config.mjs                 站点地址、集成、Markdown 处理器与插件
-├── AGENTS.md                        面向 AI 编码助手的项目约定
-├── CLAUDE.md                        引用 AGENTS.md
-└── package.json
+│   ├── content/            内容：posts/ chats/ pages/，每个页面一个文件夹
+│   ├── columns.ts          栏目登记表
+│   ├── content.config.ts   每类内容可填的字段
+│   ├── consts.ts           站名、首页介绍文字、GitHub 链接
+│   ├── pages/              网址与页面模板（文件路径即网址）
+│   ├── layouts/            页面骨架：全站外壳、栏目目录、内容页、独立页面
+│   ├── components/         页头、页脚、年份目录、深色切换、后台入口
+│   ├── styles/             tokens.css（颜色字体尺寸）、global.css（正文排版）
+│   ├── plugins/            Markdown 自定义规则（对话分段）
+│   └── integrations/       构建扩展：发布页面素材、检查网站结构
+├── public/                 原样发布的文件：网站图标、后台 admin/、共用素材 shared/
+├── .github/workflows/      自动构建与发布
+├── AGENTS.md               AI 维护规范（CLAUDE.md 指向它）
+└── README.md               本文件
 ```
 
-## 内容
+站名和首页介绍文字在 `src/consts.ts`，可直接修改。
 
-### 资源包与网址
+## 本地运行
 
-每个页面是一个文件夹，正文为其中的 `index.md`（或 `index.mdx`），文件夹名决定网址：
-
-| 资源包 | 网址 |
-|---|---|
-| `src/content/posts/my-post/` | `/posts/my-post/` |
-| `src/content/chats/my-chat/` | `/chats/my-chat/` |
-| `src/content/pages/about/` | `/about/` |
-
-文件夹名使用英文或拼音，避免网址中出现编码后的中文。内容目录根部不允许直接放置 `.md` 文件，构建时报错并提示应放入的文件夹。
-
-### Frontmatter：栏目内容共用字段
-
-| 字段 | 类型 | 必填 | 说明 |
-|---|---|---|---|
-| `title` | 字符串 | 是 | 标题 |
-| `date` | 日期 `YYYY-MM-DD` | 是 | 发布日期，决定排序与年份分组 |
-| `description` | 字符串 | 否 | 摘要，用于 `<meta name="description">` 与 RSS |
-| `updated` | 日期 | 否 | 更新日期 |
-| `tags` | 字符串数组 | 否 | 标签，默认 `[]` |
-| `draft` | 布尔 | 否 | 为 `true` 时仅在 `npm run dev` 中可见，不进入构建产物 |
-
-### Frontmatter：AI对话 额外字段
-
-| 字段 | 类型 | 必填 | 说明 |
-|---|---|---|---|
-| `ai` | 字符串 | 否 | 对话对象，如 `Claude Opus 5.5`，默认 `AI`；显示于元信息与每段 AI 发言上方 |
-| `note` | 字符串 | 否 | 批注：记录保留理由，显示于正文之前 |
-
-字段定义见 `src/content.config.ts`。frontmatter 不符合定义时构建失败，错误信息指出文件与字段。
-
-### 对话记录格式
-
-单独一行的 `@me` / `@ai` 标记一段发言的开始，持续至下一个标记：
-
-```markdown
----
-title: 标题
-date: 2026-10-14
-ai: Claude Opus 5.5
-note: 保留理由
-tags: [标签]
----
-
-@me
-
-提问内容
-
-@ai
-
-回答内容，可包含标题、列表、表格、代码块
-```
-
-处理由 `src/plugins/remark-chat-turns.mjs` 完成，输出 `<section class="turn turn-me">` / `<section class="turn turn-ai">`。不使用标题作为发言标记，因为 AI 回答本身常含 Markdown 标题。第一个标记之前的内容按普通正文渲染。
-
-### 资源
-
-| 范围 | 位置 | 引用方式 |
-|---|---|---|
-| 页面私有 | 该页面的资源包文件夹内（可建子文件夹） | 相对路径 `./name.ext` |
-| 全站共用 | `public/` | 根路径 `/name.ext` |
-
-私有资源的处理：
-
-| 引用方式 | 处理 |
-|---|---|
-| Markdown 图片 `![说明](./photo.jpg)` | Astro 图片管线：压缩、转 WebP、带尺寸信息，输出至 `/_astro/`；原图不复制 |
-| 其他相对引用：`<audio src="./a.mp3">`、`<video src="./v.mp4">`、`<img src="./x.png">`、`[下载](./doc.pdf)` 等 | `src/integrations/page-bundles.mjs` 在构建后将文件复制到页面网址下（`/posts/my-post/a.mp3`）；开发服务器直接提供，支持音视频拖动（Range 请求） |
-
-- `draft: true` 页面的资源不进入构建产物。
-- 资源包内的 `.md` 文件与以 `.` 开头的文件不发布。
-- 相对引用依赖网址以 `/` 结尾，已通过 `trailingSlash: 'always'` 统一。
-- GitHub Pages 单文件上限 100MB；大体积视频宜托管于视频平台后嵌入。
-
-### 独立页面 Frontmatter
-
-`src/content/pages/` 中的页面使用：`title`（必填）、`description`、`draft`。
-
-独立页面的网址位于站点根目录，页面名不能与栏目 id、`tags`、`admin`、`shared` 等已有网址重名，重名时构建报错（见「结构检查」）。
-
-### 标签
-
-标签由全部栏目内容的 `tags` 字段汇总生成，无需单独登记。重命名标签需修改所有使用该标签的内容文件。
-
-## 内容管理后台
-
-地址：<https://chanc313.github.io/admin/>
-
-Sveltia CMS 在浏览器中运行，通过 GitHub API 读写本仓库。保存即提交到 `main`，随后触发自动部署。
-
-### 登录
-
-| 方式 | 状态 | 权限范围 | 说明 |
-|---|---|---|---|
-| Sign In Using Access Token | 可用 | 仅本仓库（细粒度令牌） | 令牌需手动创建，到期后重新生成 |
-| Sign In with GitHub | 可用 | 全部公开仓库（`auth_scope: public_repo`） | 经 Sveltia CMS Authenticator 授权；令牌 8 小时过期，过期后重新登录 |
-
-两种方式的登录信息均保存在当前浏览器的 localStorage（键 `sveltia-cms.user`）。令牌泄露时在 GitHub 中撤销。
-
-**细粒度令牌创建**：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
-
-| 设置 | 值 |
-|---|---|
-| Repository access | Only select repositories → `chanc313/chanc313.github.io` |
-| Permissions → Contents | Read and write |
-
-**GitHub 授权服务（Sveltia CMS Authenticator）**：部署于 Cloudflare Workers，代为完成 GitHub OAuth 授权码交换。
-
-| 项目 | 值 |
-|---|---|
-| Worker | `https://sveltia-cms-auth.hjchanc313.workers.dev`，代码来自 fork `chanc313/sveltia-cms-auth` |
-| GitHub OAuth App | `chanc313blog`，回调 `https://sveltia-cms-auth.hjchanc313.workers.dev/callback`，启用令牌过期（该授权服务不处理刷新令牌，过期后需重新登录） |
-| 运行时变量 | `GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`、`ALLOWED_DOMAINS`（值为 `chanc313.github.io`，不含协议），均为 Secret 类型；普通 Variable 类型在 Worker 重新构建时会被 `wrangler deploy` 清除 |
-| 自检 | 访问 `<Worker>/auth?provider=github&site_id=chanc313.github.io&scope=public_repo`，应跳转至 GitHub 授权页；空白页表示配置错误，错误信息见页面源代码 |
-
-初次部署步骤：
-
-1. 部署：<https://deploy.workers.cloudflare.com/?url=https://github.com/sveltia/sveltia-cms-auth>，得到 `https://sveltia-cms-auth.<子域>.workers.dev`
-2. 注册 GitHub OAuth App：<https://github.com/settings/applications/new>，Authorization callback URL 为 `<Worker 网址>/callback`；生成 Client secret
-3. Cloudflare Worker → Settings → Variables：
-   - `GITHUB_CLIENT_ID`
-   - `GITHUB_CLIENT_SECRET`（加密）
-   - `ALLOWED_DOMAINS` = `chanc313.github.io`
-4. `public/admin/config.yml` 的 `backend` 下添加 `base_url: <Worker 网址>`
-
-### 站点入口
-
-`src/components/AdminLink.astro` 在页头显示「后台」链接，仅当当前浏览器已登录后台（localStorage `sveltia-cms.user` 含令牌）时可见。未登录的浏览器需直接访问 `/admin/`。
-
-### 同源安全约束
-
-后台与博客同源，登录令牌位于同源 localStorage，博客页面上运行的任何脚本均可读取。因此博客页面不加载第三方 JavaScript；需要第三方功能（如评论）时，使用 iframe 隔离的方案。
-
-### 集合与存储位置
-
-| 后台集合 | 存储位置 | 上传的媒体 |
-|---|---|---|
-| 文章 | `src/content/posts/<页面名>/index.md` | 同一文件夹 |
-| AI对话 | `src/content/chats/<页面名>/index.md` | 同一文件夹 |
-| 独立页面 | `src/content/pages/<页面名>/index.md` | 同一文件夹 |
-| 全站媒体库 | — | `public/shared/` |
-
-- 页面名在新建时填写，仅允许 ASCII 字符，保存后不可修改。
-- 删除页面时，后台一并删除该文件夹内的媒体。
-- 后台写入的媒体引用为不带 `./` 的文件名（如 `photo.jpg`），与 `./photo.jpg` 等效。
-
-### 配置同步
-
-`public/admin/config.yml` 的集合与字段需与 `src/content.config.ts` 保持一致。新增栏目或字段时两处同时修改。
-
-### 升级
-
-版本号固定于 `public/admin/index.html` 的脚本网址。升级时修改版本号，于 `/admin/` 验证后提交。
-
-## 本地开发
+需要 Node.js 22 或更高版本。
 
 ```bash
 npm install        # 首次
-npm run dev        # 开发服务器 http://localhost:4321，含草稿，文件修改后自动刷新
-npm run build      # 构建到 dist/
-npm run preview    # 预览 dist/
+npm run dev        # 本地预览 http://localhost:4321，含草稿
+npm run build      # 生成正式网站到 dist/
 ```
-
-## 部署
-
-`.github/workflows/deploy.yml` 在推送 `main` 分支或手动触发时运行：`npm ci` → `npm run build` → 上传 `dist/` → 发布至 GitHub Pages。
-
-针对 `main` 的拉取请求（PR）运行同一流程的构建部分，不上传、不发布；构建结果显示在 PR 页面。
-
-前置条件：仓库 Settings → Pages → Source 设为 **GitHub Actions**。
-
-部署状态与日志见仓库 Actions 页面。
-
-## 约定
-
-样式、组件与代码注释的约定见 `AGENTS.md`。
