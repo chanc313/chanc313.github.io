@@ -1,8 +1,11 @@
-# 自动部署：每次推送到 main 分支，GitHub 会自动构建网站并发布到 GitHub Pages
+# 自动部署：每次推送到 main 分支，GitHub 会自动构建网站并发布到 GitHub Pages。
+# 拉取请求（PR）只运行构建，不发布：合并前就能看到构建是否通过。
 name: Deploy to GitHub Pages
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -11,8 +14,9 @@ permissions:
   pages: write
   id-token: write
 
+# 发布排队执行，不互相取消；PR 的构建按 PR 分组，不占用发布队列
 concurrency:
-  group: pages
+  group: ${{ github.event_name == 'pull_request' && github.ref || 'pages' }}
   cancel-in-progress: false
 
 jobs:
@@ -26,11 +30,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
