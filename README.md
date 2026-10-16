@@ -37,8 +37,22 @@
 2. `src/content.config.ts`：添加同名集合 `notes`，loader 使用 `bundles('./src/content/notes')`
 3. 创建 `src/content/notes/`
 4. 创建 `src/pages/notes/index.astro` 与 `src/pages/notes/[...slug].astro`（结构同 `posts/`）
+5. `public/admin/config.yml`：添加 `folder: src/content/notes` 的集合（字段与第 2 步一致）
 
 资源包的发布范围由 `src/columns.ts` 自动推导，无需修改 `astro.config.mjs`。
+
+### 结构检查
+
+`src/integrations/structure-check.mjs` 在 `npm run dev` 与 `npm run build` 启动时检查以下各项，不通过则报错并列出全部问题：
+
+| 检查项 | 不检查时的后果 |
+|---|---|
+| 每个栏目有 `src/pages/<id>/index.astro` 与 `[...slug].astro` | 导航链接 404 |
+| `public/admin/config.yml` 含每个栏目及 `pages` 的集合（按 `folder: src/content/<id>` 匹配） | 后台缺少该栏目 |
+| `src/content/` 下每个目录均为已登记栏目或 `pages` | 目录中的内容不生成页面 |
+| 独立页面名不与站点根目录已有网址重名（`src/pages/` 与 `public/` 的顶层名称、`_astro`） | Astro 仅输出警告并跳过该页面 |
+
+后台字段与 `src/content.config.ts` 的逐项一致性不在检查范围内。
 
 ## 目录结构
 
@@ -83,7 +97,8 @@
 │   │   ├── EntryIndex.astro         按年份分组的目录，可标注所属栏目
 │   │   └── ThemeToggle.astro        浅色/深色切换
 │   ├── integrations/
-│   │   └── page-bundles.mjs         Astro 集成：发布资源包中的私有资源
+│   │   ├── page-bundles.mjs         Astro 集成：发布资源包中的私有资源
+│   │   └── structure-check.mjs      Astro 集成：启动时检查栏目文件、后台配置与网址冲突
 │   ├── plugins/
 │   │   └── remark-chat-turns.mjs    Markdown 插件：对话记录按发言人分段
 │   └── styles/
@@ -176,6 +191,8 @@ tags: [标签]
 
 `src/content/pages/` 中的页面使用：`title`（必填）、`description`、`draft`。
 
+独立页面的网址位于站点根目录，页面名不能与栏目 id、`tags`、`admin`、`shared` 等已有网址重名，重名时构建报错（见「结构检查」）。
+
 ### 标签
 
 标签由全部栏目内容的 `tags` 字段汇总生成，无需单独登记。重命名标签需修改所有使用该标签的内容文件。
@@ -262,6 +279,8 @@ npm run preview    # 预览 dist/
 ## 部署
 
 `.github/workflows/deploy.yml` 在推送 `main` 分支或手动触发时运行：`npm ci` → `npm run build` → 上传 `dist/` → 发布至 GitHub Pages。
+
+针对 `main` 的拉取请求（PR）运行同一流程的构建部分，不上传、不发布；构建结果显示在 PR 页面。
 
 前置条件：仓库 Settings → Pages → Source 设为 **GitHub Actions**。
 

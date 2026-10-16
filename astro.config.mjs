@@ -4,6 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import { unified } from '@astrojs/markdown-remark';
 import remarkChatTurns from './src/plugins/remark-chat-turns.mjs';
 import pageBundles from './src/integrations/page-bundles.mjs';
+import structureCheck from './src/integrations/structure-check.mjs';
 import { COLUMNS } from './src/columns.ts';
 
 export default defineConfig({
@@ -11,6 +12,8 @@ export default defineConfig({
   // 网址统一以 / 结尾。资源包里的相对引用（./bgm.mp3）依赖这一点才能解析到正确位置
   trailingSlash: 'always',
   integrations: [
+    // 结构检查：栏目文件是否齐全、后台配置是否同步、独立页面名是否与已有网址冲突（说明见集成文件开头）
+    structureCheck({ columns: COLUMNS }),
     sitemap(),
     // 页面资源包：把每个页面文件夹里的私有资源发布到该页面网址下（说明见集成文件开头）
     pageBundles({

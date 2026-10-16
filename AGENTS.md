@@ -18,7 +18,7 @@
 - 尽量不加客户端 JavaScript；需要交互时用组件内的 `<script>`，不依赖第三方库。
 - **博客页面不加载第三方 JavaScript**（CDN 脚本、统计代码、外部组件等）。后台 `/admin/` 与博客同源，后台登录令牌存在同源 localStorage 中，第三方脚本可读取。需要第三方功能（如评论）时，选 iframe 隔离的方案。
 - 代码里的注释用中文，写清楚"这段是干什么的"。
-- **栏目平行**：每个栏目在 `src/columns.ts` 登记，并在 `src/content/<id>/`、`src/pages/<id>/`、`src/content.config.ts` 中各有同名对应。不要让某个栏目独占首页或站点根级网址。新增栏目的步骤见 README。
+- **栏目平行**：每个栏目在 `src/columns.ts` 登记，并在 `src/content/<id>/`、`src/pages/<id>/`、`src/content.config.ts` 中各有同名对应。不要让某个栏目独占首页或站点根级网址。新增栏目的步骤见 README；`src/integrations/structure-check.mjs` 在启动时检查栏目文件是否齐全、后台配置是否同步、独立页面名是否与已有网址冲突，新增此类约定时把检查一并补上。
 - **页面资源包**：每个页面是 `src/content/<集合>/<页面名>/` 文件夹，正文为 `index.md`，页面私有资源（图片、音视频等）放在同一文件夹，用 `./` 相对路径引用。`public/` 只放全站共用资源。不要把某个页面的私有资源放进 `public/`。私有资源的发布由 `src/integrations/page-bundles.mjs` 负责。
 - 内容格式在 `src/content.config.ts` 定义。**改格式时同步修改后台配置 `public/admin/config.yml`**（Sveltia CMS），并更新 README 里的说明。可选字段用 `optional()` 包装，以接受后台写入的空值。
 - Markdown 用 unified（remark/rehype）管线处理（`astro.config.mjs` 中的 `processor: unified(...)`）。自定义 Markdown 处理写成 remark/rehype 插件，放在 `src/plugins/`。
