@@ -35,36 +35,19 @@ const entry = z.object({
   draft: optional(z.boolean()).transform((v) => v ?? false),
 });
 
-// 栏目：文章
+// 栏目：文章。也可以放对话记录：正文用 @me / @ai 分段（见 src/plugins/remark-chat-turns.mjs），
+// 并填 ai、note 两个字段
 const posts = defineCollection({
   loader: bundles('./src/content/posts'),
-  schema: entry,
-});
-
-// 栏目：AI 对话，多两个字段
-const chats = defineCollection({
-  loader: bundles('./src/content/chats'),
   schema: entry.extend({
-    ai: optional(z.string()).transform((v) => v ?? 'AI'), // 对话对象，如 "Claude Opus 5.5"，显示在每段 AI 发言上方
-    note: optional(z.string()),                             // 批注：这段对话为什么值得留下，显示在正文之前
+    ai: optional(z.string()),   // 对话对象，如 "Claude Opus 5.5"；填了才显示在日期后，也用作每段 AI 发言上方的名称
+    note: optional(z.string()), // 批注：显示在正文之前
   }),
-});
-
-// 栏目：ROS
-const ros = defineCollection({
-  loader: bundles('./src/content/ros'),
-  schema: entry,
 });
 
 // 栏目：项目
 const projects = defineCollection({
   loader: bundles('./src/content/projects'),
-  schema: entry,
-});
-
-// 栏目：框架和工具
-const tools = defineCollection({
-  loader: bundles('./src/content/tools'),
   schema: entry,
 });
 
@@ -84,4 +67,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, chats, ros, projects, tools, theory, pages };
+export const collections = { posts, projects, theory, pages };

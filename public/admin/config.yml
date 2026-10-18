@@ -51,86 +51,17 @@ collections:
       - { name: tags, label: 标签, widget: list, required: false, default: [] }
       - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
-      - { name: body, label: 正文, widget: markdown }
-
-  - name: chats
-    label: AI对话
-    label_singular: 对话
-    folder: src/content/chats
-    path: '{{slug}}/index'
-    media_folder: ''
-    public_folder: ''
-    extension: md
-    format: frontmatter
-    create: true
-    slug:
-      editable: [create]
-    sortable_fields: [date, title]
-    summary: '{{title}}（{{date}}）'
-    fields:
-      - { name: title, label: 标题, widget: string }
-      - { name: date, label: 日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
-      - { name: ai, label: 对话对象, widget: string, default: Claude, hint: 如 Claude Opus 5.5 }
-      - { name: note, label: 批注, widget: text, required: false, hint: 这段对话为什么值得留下 }
-      - { name: description, label: 摘要, widget: text, required: false }
-      - { name: tags, label: 标签, widget: list, required: false, default: [] }
-      - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
-      - { name: draft, label: 草稿, widget: boolean, default: false }
+      - { name: ai, label: 对话对象, widget: string, required: false, hint: 仅对话记录填写，如 Claude Opus 5.5 }
+      - { name: note, label: 批注, widget: text, required: false, hint: 显示在正文之前，如这段对话为什么值得留下 }
       - name: body
-        label: 对话内容
+        label: 正文
         widget: markdown
-        hint: 单独一行 @me 或 @ai 标记每段发言的开始
-
-  - name: ros
-    label: ROS
-    label_singular: 笔记
-    folder: src/content/ros
-    path: '{{slug}}/index'
-    media_folder: ''
-    public_folder: ''
-    extension: md
-    format: frontmatter
-    create: true
-    slug:
-      editable: [create]
-    sortable_fields: [date, title]
-    summary: '{{title}}（{{date}}）'
-    fields:
-      - { name: title, label: 标题, widget: string }
-      - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
-      - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
-      - { name: tags, label: 标签, widget: list, required: false, default: [] }
-      - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
-      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
-      - { name: body, label: 正文, widget: markdown }
+        hint: 对话记录用单独一行的 @me 或 @ai 标记每段发言的开始
 
   - name: projects
     label: 项目
     label_singular: 项目
     folder: src/content/projects
-    path: '{{slug}}/index'
-    media_folder: ''
-    public_folder: ''
-    extension: md
-    format: frontmatter
-    create: true
-    slug:
-      editable: [create]
-    sortable_fields: [date, title]
-    summary: '{{title}}（{{date}}）'
-    fields:
-      - { name: title, label: 标题, widget: string }
-      - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
-      - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
-      - { name: tags, label: 标签, widget: list, required: false, default: [] }
-      - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
-      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
-      - { name: body, label: 正文, widget: markdown }
-
-  - name: tools
-    label: 框架和工具
-    label_singular: 笔记
-    folder: src/content/tools
     path: '{{slug}}/index'
     media_folder: ''
     public_folder: ''

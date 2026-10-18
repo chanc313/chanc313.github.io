@@ -43,7 +43,7 @@
 4. 新建 `src/pages/notes/index.astro` 与 `src/pages/notes/[...slug].astro`（复制 `posts/` 的，改集合名）
 5. `public/admin/config.yml`：加 `folder: src/content/notes` 的集合，字段与第 2 步一致
 
-导航、首页、标签、RSS、资源发布都从 `src/columns.ts` 读取，无需另改。不要让某个栏目独占首页或站点根级网址。栏目特有的元信息与正文前内容，通过 `EntryLayout` 的 `meta`、`intro` 插槽和 `bodyClass` 在该栏目的 `[...slug].astro` 中补充。
+导航、首页、标签、RSS、资源发布都从 `src/columns.ts` 读取，无需另改。不要让某个栏目独占首页或站点根级网址。栏目数量由博客主人控制（2026-10-18：文章、项目、技术理论），细分主题用标签；不要为新主题主动提议开栏目。栏目特有的元信息与正文前内容，通过 `EntryLayout` 的 `meta`、`intro` 插槽和 `bodyClass` 在该栏目的 `[...slug].astro` 中补充。
 
 ### 结构检查
 
@@ -70,12 +70,12 @@
 | `updated` | 日期 | 栏目 | |
 | `tags` | 字符串数组 | 栏目 | 默认 `[]` |
 | `draft` | 布尔 | 全部 | `true` 时仅 `npm run dev` 可见，资源不进入构建产物 |
-| `ai` | 字符串 | chats | 默认 `AI`，显示于元信息与每段 AI 发言上方 |
-| `note` | 字符串 | chats | 批注，显示于正文前 |
+| `ai` | 字符串 | posts | 对话对象；填了才显示于元信息，也是每段 AI 发言上方的名称（未填时插件用 `AI`） |
+| `note` | 字符串 | posts | 批注，显示于正文前 |
 
 ### 对话记录
 
-单独一行的 `@me` / `@ai` 开始一段发言，持续到下一个标记。`src/plugins/remark-chat-turns.mjs` 输出 `<section class="turn turn-me">` / `<section class="turn turn-ai">`。不用标题做标记，因为 AI 回答本身常含标题。第一个标记之前的内容按普通正文渲染；插件对所有集合启用，不含标记的 Markdown 不受影响。
+单独一行的 `@me` / `@ai` 开始一段发言，持续到下一个标记。`src/plugins/remark-chat-turns.mjs` 输出 `<section class="turn turn-me">` / `<section class="turn turn-ai">`。不用标题做标记，因为 AI 回答本身常含标题。对话记录发在 `posts`，打标签 `AI对话`（原 `chats` 栏目已并入，旧网址在 `astro.config.mjs` 的 `redirects` 跳转）。第一个标记之前的内容按普通正文渲染；插件对所有集合启用，不含标记的 Markdown 不受影响。
 
 ## 页面资源包
 
@@ -95,7 +95,7 @@
 
 Sveltia CMS，入口 `public/admin/index.html`（版本固定在脚本网址中），配置 `public/admin/config.yml`。保存即提交到 `main`。
 
-- 集合：`posts`、`chats`、`pages` 存为 `<folder>/{{slug}}/index.md`，`media_folder: ''` 使上传的素材进入页面文件夹；全站媒体库为 `public/shared/`。
+- 集合：各栏目与 `pages` 存为 `<folder>/{{slug}}/index.md`，`media_folder: ''` 使上传的素材进入页面文件夹；全站媒体库为 `public/shared/`。
 - slug 只在新建时可编辑，保存后不可改，避免网址变化。
 - 升级：改 `index.html` 中的版本号，在 `/admin/` 验证后提交，并更新 README 技术表中的版本。
 - `src/components/AdminLink.astro` 是临时入口：检查 localStorage 中是否有令牌来显示「后台」链接，不读取令牌本身。重做入口时整个删除该组件及 `Header.astro` 中的引用。

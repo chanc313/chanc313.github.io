@@ -11,6 +11,11 @@ export default defineConfig({
   site: 'https://chanc313.github.io',
   // 网址统一以 / 结尾。资源包里的相对引用（./bgm.mp3）依赖这一点才能解析到正确位置
   trailingSlash: 'always',
+  // 旧网址跳转：「AI对话」栏目于 2026-10-18 并入「文章」，改用标签 AI对话 归类
+  redirects: {
+    '/chats/': '/tags/AI对话/',
+    '/chats/site-capabilities/': '/posts/site-capabilities/',
+  },
   integrations: [
     // 结构检查：栏目文件是否齐全、后台配置是否同步、独立页面名是否与已有网址冲突（说明见集成文件开头）
     structureCheck({ columns: COLUMNS }),

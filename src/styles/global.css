@@ -183,13 +183,13 @@ img {
   border-radius: var(--radius);
 }
 
-/* ---------- 对话记录（AI对话栏目，结构由 src/plugins/remark-chat-turns.mjs 生成） ---------- */
-.chat > .turn + .turn {
+/* ---------- 对话记录（正文用 @me / @ai 分段，结构由 src/plugins/remark-chat-turns.mjs 生成） ---------- */
+.prose > .turn + .turn {
   margin-top: 2.25em;
 }
 
 /* 发言人名称 */
-.chat .turn-label {
+.turn-label {
   font-size: var(--text-sm);
   color: var(--color-muted);
 }
@@ -199,13 +199,13 @@ img {
 }
 
 /* "我"的发言加底色，与 AI 的回答区分 */
-.chat .turn-me {
+.turn-me {
   padding: 1em 1.2em;
   background: var(--color-surface);
   border-radius: var(--radius);
 }
 
-.chat .turn-me pre {
+.turn-me pre {
   background: var(--color-bg) !important;
 }
 
