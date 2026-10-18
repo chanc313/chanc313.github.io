@@ -1,0 +1,30 @@
+---
+// "项目"栏目的内容页：src/content/projects/ 里每个资源包生成一个 /projects/<页面名>/ 页面
+import { render, type CollectionEntry } from 'astro:content';
+import EntryLayout from '../../layouts/EntryLayout.astro';
+import { getEntries } from '../../utils';
+
+type Post = CollectionEntry<'projects'>;
+
+export async function getStaticPaths() {
+  const entries = await getEntries('projects');
+  return entries.map((entry, i) => ({
+    params: { slug: entry.id },
+    // entries 从新到旧排列：newer 是更新的一篇，older 是更早的一篇
+    props: { entry, newer: entries[i - 1], older: entries[i + 1] },
+  }));
+}
+
+interface Props {
+  entry: Post;
+  newer?: Post;
+  older?: Post;
+}
+
+const { entry, newer, older } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<EntryLayout entry={entry} newer={newer} older={older}>
+  <Content />
+</EntryLayout>

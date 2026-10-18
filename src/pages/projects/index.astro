@@ -1,0 +1,10 @@
+---
+// "项目"栏目首页：/projects/
+import ColumnLayout from '../../layouts/ColumnLayout.astro';
+import { getColumn } from '../../columns';
+import { getEntries } from '../../utils';
+
+const entries = await getEntries('projects');
+---
+
+<ColumnLayout column={getColumn('projects')} entries={entries} />

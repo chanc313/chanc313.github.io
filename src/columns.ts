@@ -24,9 +24,27 @@ export const COLUMNS = [
   },
   {
     id: 'ros',
-    label: 'ROS学习',
+    label: 'ROS',
     path: '/ros/',
-    description: '学习 ROS（机器人操作系统）的笔记',
+    description: 'ROS（机器人操作系统）学习笔记',
+  },
+  {
+    id: 'projects',
+    label: '项目',
+    path: '/projects/',
+    description: '做过的项目与记录',
+  },
+  {
+    id: 'tools',
+    label: '框架和工具',
+    path: '/tools/',
+    description: '框架、库与工具的使用笔记',
+  },
+  {
+    id: 'theory',
+    label: '技术理论',
+    path: '/theory/',
+    description: '技术背后的原理与理论',
   },
 ] as const;
 

@@ -19,9 +19,7 @@ const { column, entries } = Astro.props;
     entries.length > 0 ? (
       <EntryIndex entries={entries} />
     ) : (
-      <p class="empty">
-        这个栏目还没有内容。每个页面是 <code>src/content/{column.id}/</code> 下的一个文件夹。
-      </p>
+      <p class="empty">这个栏目还没有内容。</p>
     )
   }
 </BaseLayout>

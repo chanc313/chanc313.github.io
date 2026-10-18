@@ -50,9 +50,27 @@ const chats = defineCollection({
   }),
 });
 
-// 栏目：ROS学习
+// 栏目：ROS
 const ros = defineCollection({
   loader: bundles('./src/content/ros'),
+  schema: entry,
+});
+
+// 栏目：项目
+const projects = defineCollection({
+  loader: bundles('./src/content/projects'),
+  schema: entry,
+});
+
+// 栏目：框架和工具
+const tools = defineCollection({
+  loader: bundles('./src/content/tools'),
+  schema: entry,
+});
+
+// 栏目：技术理论
+const theory = defineCollection({
+  loader: bundles('./src/content/theory'),
   schema: entry,
 });
 
@@ -66,4 +84,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, chats, ros, pages };
+export const collections = { posts, chats, ros, projects, tools, theory, pages };

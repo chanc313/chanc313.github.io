@@ -1,0 +1,10 @@
+---
+// "技术理论"栏目首页：/theory/
+import ColumnLayout from '../../layouts/ColumnLayout.astro';
+import { getColumn } from '../../columns';
+import { getEntries } from '../../utils';
+
+const entries = await getEntries('theory');
+---
+
+<ColumnLayout column={getColumn('theory')} entries={entries} />
