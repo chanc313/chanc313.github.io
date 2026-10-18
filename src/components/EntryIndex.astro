@@ -53,6 +53,12 @@ const groups = groupByYear(list);
     border-top: 1px solid var(--color-rule);
   }
 
+  /* 第一组不画上边线：目录页没有大标题，紧贴页头的分隔线会出现两条线 */
+  .year:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
   .year-label {
     margin: 0;
     font-size: var(--text-xl);

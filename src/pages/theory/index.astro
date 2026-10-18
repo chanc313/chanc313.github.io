@@ -11,7 +11,7 @@ const { trees, loose } = await getTheoryTree();
 ---
 
 <BaseLayout title={column.label} description={column.description}>
-  <h1>{column.label}</h1>
+  <h1 class="visually-hidden">{column.label}</h1>
   <ul class="topic-list">
     {
       trees.map(({ topic, count }) => (
@@ -33,11 +33,6 @@ const { trees, loose } = await getTheoryTree();
 </BaseLayout>
 
 <style>
-  h1 {
-    font-size: var(--text-2xl);
-    margin: 1rem 0 2rem;
-  }
-
   .topic-list {
     display: flex;
     flex-wrap: wrap;

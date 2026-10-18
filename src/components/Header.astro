@@ -11,7 +11,17 @@ const pages = [
   { href: '/tags/', label: '标签' },
   { href: '/about/', label: '关于' },
 ];
-const columns = COLUMNS.map((c) => ({ href: c.path, label: c.label }));
+interface Props {
+  /** 替换某个栏目在导航中的文字和链接，如进入技术理论的话题后显示话题名 */
+  columnOverride?: { id: string; label: string; href: string };
+}
+
+const { columnOverride } = Astro.props;
+const columns = COLUMNS.map((c) =>
+  c.id === columnOverride?.id
+    ? { href: columnOverride.href, label: columnOverride.label, current: true }
+    : { href: c.path, label: c.label, current: false },
+);
 
 const path = Astro.url.pathname;
 const isCurrent = (href: string) => path.startsWith(href);
@@ -46,9 +56,9 @@ const isCurrent = (href: string) => path.startsWith(href);
   <nav aria-label="栏目">
     <ul class="columns">
       {
-        columns.map(({ href, label }) => (
+        columns.map(({ href, label, current }) => (
           <li>
-            <a href={href} aria-current={isCurrent(href) ? 'page' : undefined}>
+            <a href={href} aria-current={current || isCurrent(href) ? 'page' : undefined}>
               {label}
             </a>
           </li>

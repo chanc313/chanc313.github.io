@@ -10,9 +10,11 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 interface Props {
   title?: string;
   description?: string;
+  /** 见 Header 的 columnOverride */
+  columnOverride?: { id: string; label: string; href: string };
 }
 
-const { title, description = SITE_DESCRIPTION } = Astro.props;
+const { title, description = SITE_DESCRIPTION, columnOverride } = Astro.props;
 const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
@@ -44,7 +46,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body>
     <a class="skip-link" href="#main">跳到正文</a>
-    <Header />
+    <Header columnOverride={columnOverride} />
     <main id="main" class="container">
       <slot />
     </main>

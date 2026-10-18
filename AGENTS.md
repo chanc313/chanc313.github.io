@@ -52,6 +52,7 @@
 - `src/pages/theory/[...slug].astro` 同时生成话题页与文章页，两者共用 `/theory/<名字>/`；同名由结构检查报错。
 - `getTheoryTree()`（`src/utils.ts`）按话题整理出系列（系列内按日期从早到晚）与单篇，并校验 `topic`、`series` 的引用。
 - 页面形态由博客主人定（2026-10-18）：`/theory/` 是话题的扁平列表（同标签页，不显示简介）；话题页是年份目录，一个系列算一项（`EntryIndex` 的 `items`）；只有系列文章带侧栏，侧栏只列本系列，不列话题和其他系列。
+- 进入话题（话题页及话题内文章）后，页头栏目导航的「技术理论」显示为话题名：`BaseLayout` / `EntryLayout` 的 `columnOverride`。话题页上它链接 `/theory/`，文章页上链接话题页，即点击回到上一级。
 - 侧栏 `src/components/SeriesNav.astro`：宽屏 `position: fixed`，悬停、键盘聚焦或点击把手（`data-open`）时展开；手机（< 48rem）为页面顶部的折叠目录。
 - 话题资源包发布到 `/theory/<id>/`（`astro.config.mjs` 的 `pageBundles`）。
 - 话题与标签可以同名，是博客主人的决定，不要提议合并。
@@ -139,6 +140,8 @@ GitHub 登录经 Sveltia CMS Authenticator（Cloudflare Worker）完成 OAuth �
 - 发布后以仓库为唯一内容来源。
 
 ## 设计方向
+
+- 目录类页面（栏目首页、标签、话题）不显示大标题（博客主人 2026-10-18），`<h1>` 保留为 `visually-hidden`，供读屏软件与搜索引擎使用。
 
 - 以阅读为中心：正文宽度约 40rem，单栏，左对齐。
 - 配色：青灰纸色底、深石板色文字、靛蓝墨水色强调；深色模式同一套思路。

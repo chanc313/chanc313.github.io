@@ -21,17 +21,12 @@ const { entries } = Astro.props;
 ---
 
 <BaseLayout title={`#${tag}`}>
-  <h1>#{tag}</h1>
-  <p class="count">共 {entries.length} 条。<a href="/tags/">查看全部标签</a></p>
+  <h1 class="visually-hidden">#{tag}</h1>
+  <p class="count">#{tag} 共 {entries.length} 条。<a href="/tags/">查看全部标签</a></p>
   <EntryIndex entries={entries} showColumn />
 </BaseLayout>
 
 <style>
-  h1 {
-    font-size: var(--text-2xl);
-    margin: 1rem 0 0.25rem;
-  }
-
   .count {
     margin: 0 0 2rem;
     font-size: var(--text-sm);

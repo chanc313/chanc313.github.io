@@ -68,6 +68,7 @@ const Content = entry ? (await render(entry)).Content : null;
       older={prev}
       newer={next}
       pagerLabels={series ? ['上一篇', '下一篇'] : ['更早', '更新']}
+      columnOverride={topic && { id: 'theory', label: topic.data.title, href: `/theory/${topic.id}/` }}
     >
       {series && <SeriesNav slot="aside" series={series} />}
       {topic && (
@@ -79,19 +80,18 @@ const Content = entry ? (await render(entry)).Content : null;
       <Content />
     </EntryLayout>
   ) : (
-    <BaseLayout title={topic!.data.title} description={topic!.data.description}>
-      <h1>{topic!.data.title}</h1>
+    <BaseLayout
+      title={topic!.data.title}
+      description={topic!.data.description}
+      columnOverride={{ id: 'theory', label: topic!.data.title, href: '/theory/' }}
+    >
+      <h1 class="visually-hidden">{topic!.data.title}</h1>
       {items!.length > 0 ? <EntryIndex items={items} /> : <p class="empty">这个话题还没有内容。</p>}
     </BaseLayout>
   )
 }
 
 <style>
-  h1 {
-    font-size: var(--text-2xl);
-    margin: 1rem 0 2rem;
-  }
-
   .empty {
     color: var(--color-muted);
   }

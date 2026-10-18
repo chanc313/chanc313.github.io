@@ -15,13 +15,15 @@ interface Props {
   bodyClass?: string;
   /** 翻页链接的说明文字，默认按日期（更早 / 更新）；按目录顺序翻页时传 ['上一篇', '下一篇'] */
   pagerLabels?: [string, string];
+  /** 见 Header 的 columnOverride */
+  columnOverride?: { id: string; label: string; href: string };
 }
 
-const { entry, newer, older, bodyClass, pagerLabels = ['更早', '更新'] } = Astro.props;
+const { entry, newer, older, bodyClass, pagerLabels = ['更早', '更新'], columnOverride } = Astro.props;
 const { title, description, date, updated, tags } = entry.data;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} columnOverride={columnOverride}>
   <slot name="aside" />
   <article>
     <header class="entry-header">
