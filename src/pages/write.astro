@@ -1,0 +1,308 @@
+---
+// 写作页 /write/：博客主人在前台直接写新文章并发布，不用进后台。
+//
+// 只对登录过后台的浏览器可用：页面读取后台保存的 GitHub 令牌，用它把文章提交到仓库。
+// 没有仓库写权限的人即使打开本页也无法提交。不被搜索引擎收录，不进站点地图。
+// 网址参数可预先选好栏目、话题、系列：/write/?column=theory&topic=ros&series=学习笔记
+// 交互逻辑在 src/scripts/writer.ts。修改、删除旧文章及管理话题仍在后台进行。
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { COLUMNS } from '../columns';
+
+// 页面需要的数据：栏目、技术理论的话题与系列、已占用的网址名（含草稿，避免覆盖已有文章）
+const topics = (await getCollection('topics'))
+  .sort((a, b) => a.data.order - b.data.order || a.id.localeCompare(b.id))
+  .map((t) => ({ id: t.id, title: t.data.title, series: t.data.series }));
+const taken: Record<string, string[]> = {};
+for (const c of COLUMNS) taken[c.id] = (await getCollection(c.id)).map((e) => e.id);
+// 技术理论的文章与话题共用 /theory/<名字>/
+taken.theory.push(...topics.map((t) => t.id));
+
+const data = {
+  columns: COLUMNS.map((c) => ({ id: c.id, label: c.label, path: c.path })),
+  topics,
+  taken,
+};
+---
+
+<BaseLayout title="写文章" noindex>
+  <h1 class="visually-hidden">写文章</h1>
+  <script is:inline type="application/json" id="write-data" set:html={JSON.stringify(data)} />
+
+  <p class="login" data-login hidden>
+    写文章需要先登录后台。<a href="/admin/" target="_blank">去后台登录</a>，登录后刷新本页。
+  </p>
+
+  <form class="writer" data-writer hidden>
+    <div class="row">
+      <label>
+        <span>栏目</span>
+        <select name="column"></select>
+      </label>
+      <label data-theory-only>
+        <span>话题</span>
+        <select name="topic"><option value="">不归入话题</option></select>
+      </label>
+      <label data-theory-only>
+        <span>系列</span>
+        <select name="series"><option value="">单篇文章</option></select>
+      </label>
+    </div>
+
+    <input class="title" name="title" placeholder="标题" required autocomplete="off" />
+
+    <div class="row">
+      <label class="grow">
+        <span>网址</span>
+        <span class="slug">
+          <span class="slug-prefix" data-slug-prefix></span>
+          <input name="slug" required autocomplete="off" spellcheck="false" />
+        </span>
+      </label>
+      <label class="grow">
+        <span>标签</span>
+        <input name="tags" placeholder="用逗号分隔" autocomplete="off" />
+      </label>
+    </div>
+
+    <label class="full">
+      <span>摘要</span>
+      <input name="description" placeholder="一句话，用于搜索引擎与 RSS，可不填" autocomplete="off" />
+    </label>
+
+    <div class="tabs" role="tablist" aria-label="编辑与预览">
+      <button type="button" role="tab" aria-selected="true" data-tab="edit">编辑</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="preview">预览</button>
+      <span class="hint">Markdown 格式，可直接粘贴或拖入图片</span>
+    </div>
+    <textarea class="body" name="body" placeholder="正文" spellcheck="false"></textarea>
+    <div class="preview prose" data-preview hidden></div>
+
+    <div class="actions">
+      <label class="check"><input type="checkbox" name="draft" /> 存为草稿（不公开）</label>
+      <span class="status" role="status" data-status></span>
+      <button type="button" class="discard" data-discard>清空</button>
+      <button type="submit" class="publish" data-publish>发布</button>
+    </div>
+  </form>
+</BaseLayout>
+
+<script>
+  import '../scripts/writer';
+</script>
+
+<style>
+  .login {
+    color: var(--color-muted);
+  }
+
+  .writer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .writer[hidden] {
+    display: none;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  label[hidden] {
+    display: none;
+  }
+
+  .grow {
+    flex: 1 1 14rem;
+  }
+
+  .full > input {
+    flex: 1;
+  }
+
+  select,
+  input:not([type='checkbox']),
+  textarea {
+    font: inherit;
+    color: var(--color-text);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--color-rule);
+    border-radius: 0;
+    padding: 0.25rem 0;
+  }
+
+  select:focus,
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  select {
+    cursor: pointer;
+  }
+
+  select option {
+    background: var(--color-bg);
+  }
+
+  .grow input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .slug {
+    flex: 1;
+    display: flex;
+    align-items: baseline;
+    min-width: 0;
+  }
+
+  .slug-prefix {
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+
+  .slug input {
+    flex: 1;
+    min-width: 6rem;
+    font-family: var(--font-mono);
+  }
+
+  /* 加 .writer 提高优先级，盖过上面输入框的通用样式 */
+  .writer .title {
+    margin-top: 0.5rem;
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    line-height: 1.35;
+    border-bottom: none;
+  }
+
+  .title::placeholder,
+  .body::placeholder {
+    color: var(--color-rule);
+  }
+
+  .tabs {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-top: 1rem;
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .tabs button {
+    font: inherit;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 0.4rem 0;
+    cursor: pointer;
+  }
+
+  .tabs button[aria-selected='true'] {
+    color: var(--color-text);
+    border-bottom-color: var(--color-text);
+  }
+
+  .hint {
+    margin-left: auto;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .body {
+    min-height: 24rem;
+    resize: vertical;
+    border-bottom: none;
+    font-size: var(--text-base);
+    line-height: 1.8;
+  }
+
+  .body.dragging {
+    outline: 2px dashed var(--color-accent);
+    outline-offset: 4px;
+  }
+
+  .preview {
+    min-height: 24rem;
+  }
+
+  .actions {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    padding: 0.75rem 0;
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .check {
+    color: var(--color-text);
+  }
+
+  .status {
+    flex: 1;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .status.error {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .actions button {
+    font: inherit;
+    font-size: var(--text-sm);
+    padding: 0.4rem 1.1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .discard {
+    color: var(--color-muted);
+    background: none;
+    border: 1px solid var(--color-rule);
+  }
+
+  .publish {
+    color: var(--color-bg);
+    background: var(--color-accent);
+    border: 1px solid var(--color-accent);
+  }
+
+  .publish:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  @media (max-width: 36rem) {
+    .writer .title {
+      font-size: var(--text-2xl);
+    }
+
+    .hint {
+      display: none;
+    }
+  }
+</style>

@@ -3,6 +3,7 @@
 // 点进话题才看到文章目录
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import EntryIndex from '../../components/EntryIndex.astro';
+import WriteLink from '../../components/WriteLink.astro';
 import { getColumn } from '../../columns';
 import { getTheoryTree } from '../../utils';
 
@@ -12,6 +13,7 @@ const { trees, loose } = await getTheoryTree();
 
 <BaseLayout title={column.label} description={column.description}>
   <h1 class="visually-hidden">{column.label}</h1>
+  <WriteLink href="/write/?column=theory" />
   <ul class="topic-list">
     {
       trees.map(({ topic, count }) => (

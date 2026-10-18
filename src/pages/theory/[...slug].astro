@@ -8,6 +8,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import EntryLayout from '../../layouts/EntryLayout.astro';
 import EntryIndex from '../../components/EntryIndex.astro';
 import SeriesNav from '../../components/SeriesNav.astro';
+import WriteLink from '../../components/WriteLink.astro';
 import { getTheoryTree, entryUrl, type IndexItem, type Series, type TheoryEntry, type Topic } from '../../utils';
 
 export async function getStaticPaths() {
@@ -70,7 +71,7 @@ const Content = entry ? (await render(entry)).Content : null;
       pagerLabels={series ? ['上一篇', '下一篇'] : ['更早', '更新']}
       columnOverride={topic && { id: 'theory', label: topic.data.title, href: `/theory/${topic.id}/` }}
     >
-      {series && <SeriesNav slot="aside" series={series} />}
+      {series && <SeriesNav slot="aside" series={series} topic={topic!.id} />}
       {topic && (
         <Fragment slot="meta">
           <a href={`/theory/${topic.id}/`}>{topic.data.title}</a>
@@ -86,6 +87,7 @@ const Content = entry ? (await render(entry)).Content : null;
       columnOverride={{ id: 'theory', label: topic!.data.title, href: '/theory/' }}
     >
       <h1 class="visually-hidden">{topic!.data.title}</h1>
+      <WriteLink href={`/write/?column=theory&topic=${topic!.id}`} />
       {items!.length > 0 ? <EntryIndex items={items} /> : <p class="empty">这个话题还没有内容。</p>}
     </BaseLayout>
   )

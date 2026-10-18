@@ -2,6 +2,7 @@
 // 栏目首页的布局：栏目名 + 按年份排列的目录。各栏目的 index.astro 共用。
 import BaseLayout from './BaseLayout.astro';
 import EntryIndex from '../components/EntryIndex.astro';
+import WriteLink from '../components/WriteLink.astro';
 import type { Column } from '../columns';
 import type { Entry } from '../utils';
 
@@ -15,6 +16,7 @@ const { column, entries } = Astro.props;
 
 <BaseLayout title={column.label} description={column.description}>
   <h1 class="visually-hidden">{column.label}</h1>
+  <WriteLink href={`/write/?column=${column.id}`} />
   {
     entries.length > 0 ? (
       <EntryIndex entries={entries} />

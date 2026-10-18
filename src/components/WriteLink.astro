@@ -1,0 +1,58 @@
+---
+// 「写一篇」入口：只在登录过后台的浏览器里显示，普通访客看不到。
+// 链接到写作页 /write/，通过网址参数预先选好栏目、话题、系列。
+interface Props {
+  href: string;
+  /** 链接文字，默认是一个加号 */
+  label?: string;
+}
+
+const { href, label = '+' } = Astro.props;
+---
+
+<a class:list={['write-link', { plus: label === '+' }]} href={href} title="写一篇" aria-label={label === '+' ? '写一篇' : undefined} data-write-link hidden>
+  {label}
+</a>
+
+<script>
+  import { getToken } from '../scripts/login';
+
+  if (getToken()) {
+    for (const link of document.querySelectorAll('[data-write-link]')) link.removeAttribute('hidden');
+  }
+</script>
+
+<style>
+  .write-link {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .write-link:hover {
+    text-decoration: underline;
+  }
+
+  /* 加号：列表页右上角的小圆钮，浮在目录第一行右侧 */
+  .plus {
+    float: right;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin-left: 1rem;
+    font-size: var(--text-xl);
+    line-height: 1;
+    border: 1px solid var(--color-rule);
+    border-radius: 50%;
+  }
+
+  .plus:hover {
+    text-decoration: none;
+    border-color: var(--color-accent);
+  }
+
+  .write-link[hidden] {
+    display: none;
+  }
+</style>

@@ -27,7 +27,7 @@
 - **颜色、字体、尺寸只在 `src/styles/tokens.css` 定义**，其他地方用 `var(--...)` 引用，不写死色值。新增颜色时，浅色和两段深色规则都要补上。
 - 组件样式写在组件底部的 `<style>`（Astro 自动限定作用域）；只有全站通用规则放 `src/styles/global.css`。
 - 正文排版统一用 `.prose`；对话记录的每段发言是 `.turn`，内部排版与 `.prose` 共用规则。
-- 尽量不加客户端 JavaScript；需要交互时用组件内的 `<script>`，不依赖第三方库。
+- 尽量不加客户端 JavaScript；需要交互时用组件内的 `<script>`，不依赖第三方库（例外：写作页的 `marked`，博客主人 2026-10-18 同意，只打包进 `/write/`）。
 - **博客页面不加载第三方 JavaScript**（CDN 脚本、统计代码、外部组件等）。后台 `/admin/` 与博客同源，登录令牌存在同源 localStorage（键 `sveltia-cms.user`），第三方脚本可读取。需要第三方功能（如评论）时选 iframe 隔离的方案。
 - 代码注释用中文，写清楚"这段是干什么的"。
 - Markdown 用 unified（remark/rehype）管线（`astro.config.mjs` 的 `processor: unified(...)`）。自定义处理写成 remark/rehype 插件，放 `src/plugins/`。
@@ -73,7 +73,7 @@
 
 ## 内容格式
 
-字段定义在 `src/content.config.ts`。**改格式时同步修改 `public/admin/config.yml`**，并更新 README「每篇内容可填的信息」。可选字段用 `optional()` 包装，接受后台写入的 `''` 和 `null`。
+字段定义在 `src/content.config.ts`。**改格式时同步修改 `public/admin/config.yml` 与写作页（`src/pages/write.astro` 的表单、`src/scripts/writer.ts` 的 `buildMarkdown()`）**，并更新 README「每篇内容可填的信息」。可选字段用 `optional()` 包装，接受后台写入的 `''` 和 `null`。
 
 | 字段 | 类型 | 适用 | 说明 |
 |---|---|---|---|
@@ -129,6 +129,18 @@ GitHub 登录经 Sveltia CMS Authenticator（Cloudflare Worker）完成 OAuth �
 4. `config.yml` 的 `backend` 下设 `base_url: <Worker 网址>`
 
 自检：访问 `<Worker>/auth?provider=github&site_id=chanc313.github.io&scope=public_repo`，应跳转到 GitHub 授权页；空白页表示配置错误，错误信息在页面源代码中。OAuth App 启用了令牌过期，该授权服务不处理刷新令牌，令牌 8 小时后需重新登录。
+
+## 前台写作页
+
+`/write/`（`src/pages/write.astro` + `src/scripts/writer.ts`）供博客主人在前台新建文章，不经过后台。只做新建；修改、删除与话题管理留在后台。
+
+- 登录：读取后台保存的令牌（`src/scripts/login.ts` 的 `getToken()`），不自己做登录。令牌 401 时提示去 `/admin/` 重新登录，表单内容保留。
+- 入口：`src/components/WriteLink.astro`，有令牌才显示。栏目目录页（`ColumnLayout`）、`/theory/`、话题页放「+」，`SeriesNav` 放「续写这个系列」。网址参数 `column`、`topic`、`series` 预选表单。
+- 构建时数据：栏目、话题与系列、各栏目已占用的页面名（含草稿；`theory` 还含话题名），以 JSON 嵌入页面。发布前再用 `GET /contents/...` 确认目录不存在。
+- 发布：GitHub Git Data API（blobs → trees → commits → 更新 `refs/heads/main`，ref 冲突时重试），文章与图片一次提交，路径 `src/content/<栏目>/<页面名>/`。仓库名在 `src/consts.ts` 的 `REPO`。frontmatter 字符串用 `JSON.stringify` 写（合法 YAML）。
+- 草稿：文字存 localStorage（`write-draft`），图片存 IndexedDB（库 `write-draft`）。发布或「清空」后删除。只提交正文仍引用的图片。
+- 预览用 `marked`（唯一新增依赖，只打包进写作页），与站点 unified 管线不完全一致（不含对话分段、图片优化），仅作排版参考。
+- 写作页 `noindex`，不进 sitemap（`astro.config.mjs` 的 `filter`）。
 
 ## 部署
 
