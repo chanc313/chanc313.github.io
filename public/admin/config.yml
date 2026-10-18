@@ -102,7 +102,39 @@ collections:
       - { name: tags, label: 标签, widget: list, required: false, default: [] }
       - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
+      - name: topic
+        label: 话题
+        widget: relation
+        collection: topics
+        value_field: '{{slug}}'
+        search_fields: [title]
+        display_fields: [title]
+        required: false
+        hint: 不选则列在「未归入话题」
+      - { name: series, label: 系列, widget: string, required: false, hint: 必须与所选话题的「系列」列表中的一项完全一致；不属于系列就留空 }
       - { name: body, label: 正文, widget: markdown }
+
+  # 技术理论的话题：网址为 /theory/<文件夹名>/，文件夹名不能与技术理论的文章重名
+  - name: topics
+    label: 技术理论话题
+    label_singular: 话题
+    folder: src/content/topics
+    path: '{{slug}}/index'
+    media_folder: ''
+    public_folder: ''
+    extension: md
+    format: frontmatter
+    create: true
+    slug:
+      editable: [create]
+    sortable_fields: [order, title]
+    summary: '{{title}}'
+    fields:
+      - { name: title, label: 名称, widget: string }
+      - { name: description, label: 简介, widget: text, required: false, hint: 一句话，显示在技术理论首页和话题页 }
+      - { name: order, label: 排序, widget: number, value_type: int, default: 0, required: false, hint: 数字小的排在前面 }
+      - { name: series, label: 系列, widget: list, required: false, default: [], hint: 话题内的系列名，顺序即目录中的顺序 }
+      - { name: body, label: 导读, widget: markdown, required: false }
 
   - name: pages
     label: 独立页面

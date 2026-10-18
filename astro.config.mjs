@@ -25,6 +25,8 @@ export default defineConfig({
       // 各栏目从 src/columns.ts 读取，新增栏目无需改这里；独立页面在站点根目录下
       bundles: [
         ...COLUMNS.map((c) => ({ dir: `src/content/${c.id}`, url: c.path })),
+        // 技术理论的话题页与文章同在 /theory/ 下
+        { dir: 'src/content/topics', url: '/theory/' },
         { dir: 'src/content/pages', url: '/' },
       ],
     }),

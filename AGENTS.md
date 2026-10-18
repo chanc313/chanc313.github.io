@@ -43,7 +43,17 @@
 4. 新建 `src/pages/notes/index.astro` 与 `src/pages/notes/[...slug].astro`（复制 `posts/` 的，改集合名）
 5. `public/admin/config.yml`：加 `folder: src/content/notes` 的集合，字段与第 2 步一致
 
-导航、首页、标签、RSS、资源发布都从 `src/columns.ts` 读取，无需另改。不要让某个栏目独占首页或站点根级网址。栏目数量由博客主人控制（2026-10-18：文章、项目、技术理论），细分主题用标签；不要为新主题主动提议开栏目。栏目特有的元信息与正文前内容，通过 `EntryLayout` 的 `meta`、`intro` 插槽和 `bodyClass` 在该栏目的 `[...slug].astro` 中补充。
+导航、首页、标签、RSS、资源发布都从 `src/columns.ts` 读取，无需另改。不要让某个栏目独占首页或站点根级网址。栏目数量由博客主人控制（2026-10-18：文章、项目、技术理论），细分主题用标签；不要为新主题主动提议开栏目。栏目特有的元信息与正文前内容，通过 `EntryLayout` 的 `meta`、`intro`、`aside` 插槽和 `bodyClass`、`pagerLabels` 在该栏目的 `[...slug].astro` 中补充。
+
+### 技术理论的话题
+
+技术理论是唯一有分级目录的栏目：话题（`topics` 集合，`src/content/topics/<id>/`）→ 系列（话题的 `series` 列表）→ 文章（`theory` 的 `topic`、`series` 字段）。话题由博客主人维护，不要主动增删。
+
+- `src/pages/theory/[...slug].astro` 同时生成话题页与文章页，两者共用 `/theory/<名字>/`；同名由结构检查报错。
+- `getTheoryTree()`（`src/utils.ts`）生成目录并校验 `topic`、`series` 的引用，侧栏、首页、话题页、翻页都用它。话题内顺序：系列按话题的 `series` 列表，系列内与系列外的文章按日期从早到晚，系列在前。
+- 侧栏 `src/components/TheoryNav.astro`：宽屏 `position: fixed`，悬停、键盘聚焦或点击把手（`data-open`）时展开；手机（< 48rem）为页面顶部的折叠目录。
+- 话题资源包发布到 `/theory/<id>/`（`astro.config.mjs` 的 `pageBundles`）。
+- 话题与标签可以同名，是博客主人的决定，不要提议合并。
 
 ### 结构检查
 
@@ -52,8 +62,9 @@
 | 检查项 | 不检查时的后果 |
 |---|---|
 | 每个栏目有 `src/pages/<id>/index.astro` 与 `[...slug].astro` | 导航链接 404 |
-| `public/admin/config.yml` 含每个栏目及 `pages` 的 `folder: src/content/<id>` | 后台缺少该栏目 |
-| `src/content/` 下每个目录都是已登记栏目或 `pages` | 内容不生成页面 |
+| `public/admin/config.yml` 含每个栏目及 `pages`、`topics` 的 `folder: src/content/<id>` | 后台缺少该栏目 |
+| `src/content/` 下每个目录都是已登记栏目、`pages` 或 `topics` | 内容不生成页面 |
+| 话题名（`src/content/topics/`）不与技术理论文章名重名 | 两个页面争用 `/theory/<名字>/` |
 | 独立页面名不与 `src/pages/`、`public/` 顶层名称及 `_astro` 重名 | Astro 只警告并跳过该页面 |
 
 后台字段与 `src/content.config.ts` 的逐项一致性不在检查范围内，改字段时人工核对。新增类似"漏改不报错"的约定时，把检查补进这个集成。
@@ -72,6 +83,10 @@
 | `draft` | 布尔 | 全部 | `true` 时仅 `npm run dev` 可见，资源不进入构建产物 |
 | `ai` | 字符串 | posts | 对话对象；填了才显示于元信息，也是每段 AI 发言上方的名称（未填时插件用 `AI`） |
 | `note` | 字符串 | posts | 批注，显示于正文前 |
+| `topic` | 字符串 | theory | 话题 id；不存在时构建报错 |
+| `series` | 字符串 | theory | 系列名，须在该话题的 `series` 列表中 |
+
+话题（`topics`）字段：`title`、`description`、`order`（数字，小的在前）、`series`（字符串数组）。
 
 ### 对话记录
 

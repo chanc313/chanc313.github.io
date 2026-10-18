@@ -1,10 +1,81 @@
 ---
-// "技术理论"栏目首页：/theory/
-import ColumnLayout from '../../layouts/ColumnLayout.astro';
+// "技术理论"栏目首页：/theory/。与其他栏目不同，这里按话题排列，而不是按年份
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TheoryNav from '../../components/TheoryNav.astro';
+import EntryIndex from '../../components/EntryIndex.astro';
 import { getColumn } from '../../columns';
-import { getEntries } from '../../utils';
+import { getTheoryTree } from '../../utils';
 
-const entries = await getEntries('theory');
+const column = getColumn('theory');
+const { trees, loose } = await getTheoryTree();
 ---
 
-<ColumnLayout column={getColumn('theory')} entries={entries} />
+<BaseLayout title={column.label} description={column.description}>
+  <TheoryNav trees={trees} loose={loose} />
+  <h1>{column.label}</h1>
+  <ul class="topic-list">
+    {
+      trees.map(({ topic, sequence }) => (
+        <li>
+          <a href={`/theory/${topic.id}/`}>{topic.data.title}</a>
+          <span class="count">{sequence.length} 篇</span>
+          {topic.data.description && <p>{topic.data.description}</p>}
+        </li>
+      ))
+    }
+  </ul>
+  {
+    loose.length > 0 && (
+      <section class="loose">
+        <h2>未归入话题</h2>
+        <EntryIndex entries={loose} />
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: var(--text-2xl);
+    margin: 1rem 0 2rem;
+  }
+
+  .topic-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .topic-list li {
+    padding-block: 1rem;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .topic-list a {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .topic-list a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .count {
+    margin-left: 0.75rem;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .topic-list p {
+    margin: 0.25rem 0 0;
+    color: var(--color-muted);
+  }
+
+  .loose h2 {
+    font-size: var(--text-xl);
+    margin: 3rem 0 1rem;
+  }
+</style>

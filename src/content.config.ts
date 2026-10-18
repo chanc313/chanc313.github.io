@@ -51,10 +51,25 @@ const projects = defineCollection({
   schema: entry,
 });
 
-// 栏目：技术理论
+// 栏目：技术理论。每篇可归入一个话题（topics 集合），并可在话题内归入一个系列
 const theory = defineCollection({
   loader: bundles('./src/content/theory'),
-  schema: entry,
+  schema: entry.extend({
+    topic: optional(z.string()),  // 话题的文件夹名，如 ros；不填则列在「未归入话题」
+    series: optional(z.string()), // 系列名，必须是该话题 series 列表中的一项
+  }),
+});
+
+// 技术理论的话题（如 ROS、控制理论），网址为 /theory/<话题名>/。
+// 正文是话题导读；series 列出话题内的系列，顺序即侧栏和话题页中的顺序
+const topics = defineCollection({
+  loader: bundles('./src/content/topics'),
+  schema: z.object({
+    title: z.string(),
+    description: optional(z.string()),
+    order: optional(z.number()).transform((v) => v ?? 0), // 话题之间的排序，小的在前
+    series: optional(z.array(z.string())).transform((v) => v ?? []),
+  }),
 });
 
 // 独立页面（不属于任何栏目，如"关于"），网址为 /<页面名>/
@@ -67,4 +82,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, projects, theory, pages };
+export const collections = { posts, projects, theory, topics, pages };

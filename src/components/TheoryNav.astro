@@ -1,0 +1,296 @@
+---
+// 技术理论的目录侧栏：话题 → 系列 → 文章，可逐级折叠。技术理论的所有页面共用。
+//
+// 宽屏：贴在窗口左边缘，平时只露出一个「目录」把手；鼠标移到把手上展开，移开收起，
+//       盖在正文上方，随页面滚动保持不动。点击把手可固定展开，再点一次、按 Esc 或点别处收起。
+// 手机：放在页面顶部，作为普通的折叠目录，点「目录」展开。
+import { entryUrl, type TopicTree, type TheoryEntry } from '../utils';
+
+interface Props {
+  trees: TopicTree[];
+  loose: TheoryEntry[];
+  /** 当前页面所在的话题 id（用于默认展开） */
+  currentTopic?: string;
+}
+
+const { trees, loose, currentTopic } = Astro.props;
+const path = Astro.url.pathname;
+const current = (href: string) => (path === href ? 'page' : undefined);
+---
+
+<aside class="toc" data-toc>
+  <button class="handle" type="button" aria-expanded="false" aria-controls="toc-panel">目录</button>
+  <nav id="toc-panel" class="panel" aria-label="技术理论目录">
+    <a class="root" href="/theory/" aria-current={current('/theory/')}>技术理论</a>
+    <ul class="topics">
+      {
+        trees.map(({ topic, groups, sequence }) => (
+          <li>
+            <details open={topic.id === currentTopic}>
+              <summary>
+                <a href={`/theory/${topic.id}/`} aria-current={current(`/theory/${topic.id}/`)}>
+                  {topic.data.title}
+                </a>
+                <span class="count">{sequence.length}</span>
+              </summary>
+              <ul>
+                {groups.map(({ series, entries }) =>
+                  series ? (
+                    <li>
+                      <details open={entries.some((e) => path === entryUrl(e))}>
+                        <summary class="series">{series}</summary>
+                        <ul>
+                          {entries.map((e) => (
+                            <li>
+                              <a href={entryUrl(e)} aria-current={current(entryUrl(e))}>
+                                {e.data.title}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    </li>
+                  ) : (
+                    entries.map((e) => (
+                      <li>
+                        <a href={entryUrl(e)} aria-current={current(entryUrl(e))}>
+                          {e.data.title}
+                        </a>
+                      </li>
+                    ))
+                  ),
+                )}
+              </ul>
+            </details>
+          </li>
+        ))
+      }
+      {
+        loose.length > 0 && (
+          <li>
+            <details open={loose.some((e) => path === entryUrl(e))}>
+              <summary class="series">未归入话题</summary>
+              <ul>
+                {loose.map((e) => (
+                  <li>
+                    <a href={entryUrl(e)} aria-current={current(entryUrl(e))}>
+                      {e.data.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </li>
+        )
+      }
+    </ul>
+  </nav>
+</aside>
+
+<script>
+  // 点击把手切换"固定展开"；Esc 或点击侧栏以外的地方收起
+  for (const toc of document.querySelectorAll<HTMLElement>('[data-toc]')) {
+    const handle = toc.querySelector<HTMLButtonElement>('.handle')!;
+    const setOpen = (open: boolean) => {
+      toc.toggleAttribute('data-open', open);
+      handle.setAttribute('aria-expanded', String(open));
+    };
+    handle.addEventListener('click', () => setOpen(!toc.hasAttribute('data-open')));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && toc.hasAttribute('data-open')) {
+        setOpen(false);
+        handle.focus();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      const wide = matchMedia('(min-width: 48rem)').matches;
+      if (wide && !toc.contains(e.target as Node)) setOpen(false);
+    });
+  }
+</script>
+
+<style>
+  .panel ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .panel ul ul {
+    padding-left: 0.9rem;
+  }
+
+  .panel {
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+
+  .panel a {
+    display: block;
+    padding: 0.3rem 0;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .panel a:hover {
+    color: var(--color-accent);
+  }
+
+  .panel a[aria-current='page'] {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .root {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    margin-bottom: 0.5rem;
+  }
+
+  summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+
+  /* 折叠标记：收起时 ▸，展开时 ▾。summary 用了 flex 布局，浏览器自带的标记不显示，这里自己画 */
+  summary {
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::before {
+    content: '';
+    flex-shrink: 0;
+    width: 0.35rem;
+    height: 0.35rem;
+    margin: 0 0.2rem 0.15rem 0.1rem;
+    border-right: 1.5px solid var(--color-muted);
+    border-bottom: 1.5px solid var(--color-muted);
+    transform: rotate(-45deg);
+  }
+
+  details[open] > summary::before {
+    transform: rotate(45deg);
+  }
+
+  /* 不可折叠的文章链接与折叠项的文字对齐 */
+  li > a {
+    padding-left: 1.15rem;
+  }
+
+  summary a {
+    flex: 1;
+  }
+
+  .topics > li > details > summary a {
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+  }
+
+  .series {
+    padding: 0.3rem 0;
+    color: var(--color-muted);
+  }
+
+  .count {
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .handle {
+    font: inherit;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    cursor: pointer;
+  }
+
+  .handle:hover {
+    color: var(--color-accent);
+  }
+
+  /* 宽屏：贴边的悬浮侧栏 */
+  @media (min-width: 48rem) {
+    .toc {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 20;
+      width: 19rem;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+    }
+
+    /* 鼠标悬停、键盘聚焦、点击固定时展开 */
+    .toc:hover,
+    .toc:has(:focus-visible),
+    .toc[data-open] {
+      transform: none;
+    }
+
+    .panel {
+      height: 100%;
+      overflow-y: auto;
+      padding: 2rem 1.25rem 3rem 1.5rem;
+      background: var(--color-bg);
+      border-right: 1px solid var(--color-rule);
+    }
+
+    /* 把手：从侧栏右边缘伸出，竖排文字 */
+    .handle {
+      position: absolute;
+      top: 8rem;
+      left: 100%;
+      /* 宽度只容一个字，"目录"两字自然竖排 */
+      width: 1.9rem;
+      padding: 0.75rem 0.4rem;
+      line-height: 1.3;
+      letter-spacing: 0.2em;
+      border-left: none;
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+  }
+
+  @media (min-width: 48rem) and (prefers-reduced-motion: reduce) {
+    .toc {
+      transition: none;
+    }
+  }
+
+  /* 手机：页面顶部的折叠目录 */
+  @media (max-width: 47.99rem) {
+    .toc {
+      margin-bottom: 2rem;
+    }
+
+    .handle {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      border-radius: var(--radius);
+    }
+
+    .handle::after {
+      content: ' ▾';
+    }
+
+    .toc[data-open] .handle::after {
+      content: ' ▴';
+    }
+
+    .toc:not([data-open]) .panel {
+      display: none;
+    }
+
+    .panel {
+      padding: 1rem 0.75rem 0;
+    }
+  }
+</style>

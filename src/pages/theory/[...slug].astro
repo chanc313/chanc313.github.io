@@ -1,30 +1,161 @@
 ---
-// "技术理论"栏目的内容页：src/content/theory/ 里每个资源包生成一个 /theory/<页面名>/ 页面
-import { render, type CollectionEntry } from 'astro:content';
+// "技术理论"栏目的两类页面，网址都在 /theory/ 下：
+//   话题页 /theory/<话题名>/   来自 src/content/topics/
+//   文章页 /theory/<页面名>/   来自 src/content/theory/
+// 两者共用一层网址，同名会冲突，由 src/integrations/structure-check.mjs 在启动时检查。
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import EntryLayout from '../../layouts/EntryLayout.astro';
-import { getEntries } from '../../utils';
-
-type Post = CollectionEntry<'theory'>;
+import TheoryNav from '../../components/TheoryNav.astro';
+import { getTheoryTree, entryUrl, formatDate, type TheoryEntry, type TopicTree } from '../../utils';
 
 export async function getStaticPaths() {
-  const entries = await getEntries('theory');
-  return entries.map((entry, i) => ({
-    params: { slug: entry.id },
-    // entries 从新到旧排列：newer 是更新的一篇，older 是更早的一篇
-    props: { entry, newer: entries[i - 1], older: entries[i + 1] },
+  const { trees, loose } = await getTheoryTree();
+  const nav = { trees, loose };
+
+  const topicPages = trees.map((tree) => ({
+    params: { slug: tree.topic.id },
+    props: { nav, tree },
   }));
+
+  // 话题内的文章按目录顺序翻页（上一篇 / 下一篇）
+  const topicEntries = trees.flatMap((tree) =>
+    tree.sequence.map((entry, i) => ({
+      params: { slug: entry.id },
+      props: { nav, tree, entry, prev: tree.sequence[i - 1], next: tree.sequence[i + 1] },
+    })),
+  );
+
+  // 未归入话题的文章按日期翻页（loose 从新到旧）
+  const looseEntries = loose.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: { nav, entry, prev: loose[i + 1], next: loose[i - 1] },
+  }));
+
+  return [...topicPages, ...topicEntries, ...looseEntries];
 }
 
 interface Props {
-  entry: Post;
-  newer?: Post;
-  older?: Post;
+  nav: { trees: TopicTree[]; loose: TheoryEntry[] };
+  tree?: TopicTree;
+  entry?: TheoryEntry;
+  prev?: TheoryEntry;
+  next?: TheoryEntry;
 }
 
-const { entry, newer, older } = Astro.props;
-const { Content } = await render(entry);
+const { nav, tree, entry, prev, next } = Astro.props;
+const { Content } = await render(entry ?? tree!.topic);
+const topic = tree?.topic;
 ---
 
-<EntryLayout entry={entry} newer={newer} older={older}>
-  <Content />
-</EntryLayout>
+{
+  entry ? (
+    <EntryLayout
+      entry={entry}
+      older={prev}
+      newer={next}
+      pagerLabels={topic ? ['上一篇', '下一篇'] : ['更早', '更新']}
+    >
+      <TheoryNav slot="aside" {...nav} currentTopic={topic?.id} />
+      {topic && (
+        <Fragment slot="meta">
+          <a href={`/theory/${topic.id}/`}>{topic.data.title}</a>
+          {entry.data.series && <span>系列：{entry.data.series}</span>}
+        </Fragment>
+      )}
+      <Content />
+    </EntryLayout>
+  ) : (
+    <BaseLayout title={topic!.data.title} description={topic!.data.description}>
+      <TheoryNav {...nav} currentTopic={topic!.id} />
+      <header class="topic-header">
+        <p class="crumb">
+          <a href="/theory/">技术理论</a>
+        </p>
+        <h1>{topic!.data.title}</h1>
+        {topic!.data.description && <p class="lead">{topic!.data.description}</p>}
+      </header>
+      <div class="prose">
+        <Content />
+      </div>
+      {tree!.groups.length === 0 && <p class="empty">这个话题还没有文章。</p>}
+      {tree!.groups.map(({ series, entries }) => (
+        <section class="group">
+          {series ? <h2>{series}</h2> : tree!.groups.length > 1 && <h2>其他</h2>}
+          <ol>
+            {entries.map((e) => (
+              <li>
+                <a href={entryUrl(e)}>{e.data.title}</a>
+                <time datetime={e.data.date.toISOString()}>{formatDate(e.data.date)}</time>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </BaseLayout>
+  )
+}
+
+<style>
+  .crumb {
+    margin: 1rem 0 0;
+    font-size: var(--text-sm);
+  }
+
+  h1 {
+    font-size: var(--text-3xl);
+    margin: 0.25rem 0 0.75rem;
+  }
+
+  .lead {
+    margin: 0 0 2rem;
+    color: var(--color-muted);
+  }
+
+  .group h2 {
+    font-size: var(--text-xl);
+    margin: 2.5rem 0 0.75rem;
+  }
+
+  .group ol {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+
+  .group li {
+    padding-block: 0.3rem;
+  }
+
+  .group li::marker {
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .group a {
+    font-size: var(--text-lg);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .group a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .group time {
+    margin-left: 0.75rem;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .empty {
+    margin-top: 2rem;
+    color: var(--color-muted);
+  }
+
+  @media (max-width: 36rem) {
+    h1 {
+      font-size: var(--text-2xl);
+    }
+  }
+</style>
