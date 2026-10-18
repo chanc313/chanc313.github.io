@@ -31,12 +31,21 @@ export function entryUrl(entry: Entry): string {
   return `${columnOf(entry).path}${entry.id}/`;
 }
 
-/** 按年份分组，供年份目录使用 */
-export function groupByYear(entries: Entry[]): [number, Entry[]][] {
-  const groups = new Map<number, Entry[]>();
-  for (const entry of entries) {
-    const year = entry.data.date.getFullYear();
-    groups.set(year, [...(groups.get(year) ?? []), entry]);
+/** 年份目录里的一行：标题、链接、日期，可带一个小标注（所属栏目、"系列 · 3 篇"等） */
+export interface IndexItem {
+  title: string;
+  url: string;
+  date: Date;
+  label?: string;
+  draft?: boolean;
+}
+
+/** 按年份分组，供年份目录使用（输入已按日期排好） */
+export function groupByYear(items: IndexItem[]): [number, IndexItem[]][] {
+  const groups = new Map<number, IndexItem[]>();
+  for (const item of items) {
+    const year = item.date.getFullYear();
+    groups.set(year, [...(groups.get(year) ?? []), item]);
   }
   return [...groups.entries()];
 }
@@ -53,18 +62,24 @@ export function countTags(entries: Entry[]): [string, number][] {
 export type Topic = CollectionEntry<'topics'>;
 export type TheoryEntry = CollectionEntry<'theory'>;
 
-/** 一个话题的目录：先是各系列（按话题里 series 的顺序），最后是不属于系列的文章 */
+/** 话题内的一个系列：文章按发布日期从早到晚（阅读顺序） */
+export interface Series {
+  name: string;
+  entries: TheoryEntry[];
+}
+
+/** 一个话题的内容：各系列（按话题里 series 的顺序）与不属于系列的单篇文章（从新到旧） */
 export interface TopicTree {
   topic: Topic;
-  groups: { series?: string; entries: TheoryEntry[] }[];
-  /** 话题内全部文章按目录顺序排成一列，用于「上一篇 / 下一篇」 */
-  sequence: TheoryEntry[];
+  series: Series[];
+  singles: TheoryEntry[];
+  /** 文章总数 */
+  count: number;
 }
 
 /**
- * 技术理论栏目的完整目录：每个话题一棵树，外加未归入话题的文章（从新到旧）。
+ * 技术理论栏目的结构：每个话题一份，外加未归入话题的文章（从新到旧）。
  * 同时检查文章填写的话题、系列是否存在，填错直接报错，避免文章从目录中"消失"。
- * 话题、系列内的文章按发布日期从早到晚排列（学习笔记的阅读顺序）。
  */
 export async function getTheoryTree(): Promise<{ trees: TopicTree[]; loose: TheoryEntry[] }> {
   const topics = (await getCollection('topics')).sort(
@@ -85,16 +100,17 @@ export async function getTheoryTree(): Promise<{ trees: TopicTree[]; loose: Theo
   }
   if (errors.length > 0) throw new Error(`技术理论目录检查未通过：\n${errors.map((e) => `  - ${e}`).join('\n')}`);
 
-  const oldestFirst = [...entries].sort(
-    (a, b) => a.data.date.valueOf() - b.data.date.valueOf() || a.id.localeCompare(b.id),
-  );
   const trees = topics.map((topic) => {
-    const mine = oldestFirst.filter((e) => e.data.topic === topic.id);
-    const groups = [
-      ...topic.data.series.map((series) => ({ series, entries: mine.filter((e) => e.data.series === series) })),
-      { entries: mine.filter((e) => !e.data.series) },
-    ].filter((g) => g.entries.length > 0);
-    return { topic, groups, sequence: groups.flatMap((g) => g.entries) };
+    const mine = entries.filter((e) => e.data.topic === topic.id);
+    const series = topic.data.series
+      .map((name) => ({
+        name,
+        entries: mine
+          .filter((e) => e.data.series === name)
+          .sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf() || a.id.localeCompare(b.id)),
+      }))
+      .filter((s) => s.entries.length > 0);
+    return { topic, series, singles: mine.filter((e) => !e.data.series), count: mine.length };
   });
   return { trees, loose: entries.filter((e) => !e.data.topic) };
 }

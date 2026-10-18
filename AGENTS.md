@@ -50,8 +50,9 @@
 技术理论是唯一有分级目录的栏目：话题（`topics` 集合，`src/content/topics/<id>/`）→ 系列（话题的 `series` 列表）→ 文章（`theory` 的 `topic`、`series` 字段）。话题由博客主人维护，不要主动增删。
 
 - `src/pages/theory/[...slug].astro` 同时生成话题页与文章页，两者共用 `/theory/<名字>/`；同名由结构检查报错。
-- `getTheoryTree()`（`src/utils.ts`）生成目录并校验 `topic`、`series` 的引用，侧栏、首页、话题页、翻页都用它。话题内顺序：系列按话题的 `series` 列表，系列内与系列外的文章按日期从早到晚，系列在前。
-- 侧栏 `src/components/TheoryNav.astro`：宽屏 `position: fixed`，悬停、键盘聚焦或点击把手（`data-open`）时展开；手机（< 48rem）为页面顶部的折叠目录。
+- `getTheoryTree()`（`src/utils.ts`）按话题整理出系列（系列内按日期从早到晚）与单篇，并校验 `topic`、`series` 的引用。
+- 页面形态由博客主人定（2026-10-18）：`/theory/` 是话题的扁平列表（同标签页，不显示简介）；话题页是年份目录，一个系列算一项（`EntryIndex` 的 `items`）；只有系列文章带侧栏，侧栏只列本系列，不列话题和其他系列。
+- 侧栏 `src/components/SeriesNav.astro`：宽屏 `position: fixed`，悬停、键盘聚焦或点击把手（`data-open`）时展开；手机（< 48rem）为页面顶部的折叠目录。
 - 话题资源包发布到 `/theory/<id>/`（`astro.config.mjs` 的 `pageBundles`）。
 - 话题与标签可以同名，是博客主人的决定，不要提议合并。
 

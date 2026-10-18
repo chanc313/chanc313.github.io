@@ -1,32 +1,41 @@
 ---
 // 按年份分组的目录：年份在左侧栏，标题和日期在右侧。
-// 首页、各栏目首页、标签页共用。
+// 首页、各栏目首页、标签页、技术理论的话题页共用。
+// 传 entries（内容条目）或 items（已整理好的条目，如话题页里"一个系列算一项"）二选一。
 // showColumn 为 true 时，在标题后标出所属栏目（混合多个栏目时使用）。
-import { groupByYear, formatDate, entryUrl, columnOf, type Entry } from '../utils';
+import { groupByYear, formatDate, entryUrl, columnOf, type Entry, type IndexItem } from '../utils';
 
 interface Props {
-  entries: Entry[];
+  entries?: Entry[];
+  items?: IndexItem[];
   showColumn?: boolean;
 }
 
-const { entries, showColumn = false } = Astro.props;
-const groups = groupByYear(entries);
+const { entries = [], items, showColumn = false } = Astro.props;
+const list: IndexItem[] =
+  items ??
+  entries.map((entry) => ({
+    title: entry.data.title,
+    url: entryUrl(entry),
+    date: entry.data.date,
+    label: showColumn ? columnOf(entry).label : undefined,
+    draft: entry.data.draft,
+  }));
+const groups = groupByYear(list);
 ---
 
 <div class="index">
   {
-    groups.map(([year, items]) => (
+    groups.map(([year, yearItems]) => (
       <section class="year" aria-labelledby={`y${year}`}>
         <h2 id={`y${year}`} class="year-label">{year}</h2>
         <ol class="entries">
-          {items.map((entry) => (
+          {yearItems.map((item) => (
             <li>
-              <a href={entryUrl(entry)}>{entry.data.title}</a>
-              {showColumn && <span class="column">{columnOf(entry).label}</span>}
-              {entry.data.draft && <span class="draft">草稿</span>}
-              <time datetime={entry.data.date.toISOString()}>
-                {formatDate(entry.data.date, 'short')}
-              </time>
+              <a href={item.url}>{item.title}</a>
+              {item.label && <span class="column">{item.label}</span>}
+              {item.draft && <span class="draft">草稿</span>}
+              <time datetime={item.date.toISOString()}>{formatDate(item.date, 'short')}</time>
             </li>
           ))}
         </ol>

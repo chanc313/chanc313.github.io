@@ -131,10 +131,9 @@ collections:
     summary: '{{title}}'
     fields:
       - { name: title, label: 名称, widget: string }
-      - { name: description, label: 简介, widget: text, required: false, hint: 一句话，显示在技术理论首页和话题页 }
+      - { name: description, label: 简介, widget: text, required: false, hint: 一句话，用于搜索引擎，页面上不显示 }
       - { name: order, label: 排序, widget: number, value_type: int, default: 0, required: false, hint: 数字小的排在前面 }
-      - { name: series, label: 系列, widget: list, required: false, default: [], hint: 话题内的系列名，顺序即目录中的顺序 }
-      - { name: body, label: 导读, widget: markdown, required: false }
+      - { name: series, label: 系列, widget: list, required: false, default: [], hint: 话题内的系列名，如 学习笔记；文章填同样的名字即归入该系列 }
 
   - name: pages
     label: 独立页面
