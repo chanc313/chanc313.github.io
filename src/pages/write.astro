@@ -7,6 +7,7 @@
 // 交互逻辑在 src/scripts/writer.ts。修改、删除旧文章及管理话题仍在后台进行。
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import '../styles/math.css';
 import { COLUMNS } from '../columns';
 
 // 页面需要的数据：栏目、技术理论的话题与系列、已占用的网址名（含草稿，避免覆盖已有文章）
@@ -70,12 +71,44 @@ const data = {
       <input name="description" placeholder="一句话，用于搜索引擎与 RSS，可不填" autocomplete="off" />
     </label>
 
-    <div class="tabs" role="tablist" aria-label="编辑与预览">
-      <button type="button" role="tab" aria-selected="true" data-tab="edit">编辑</button>
-      <button type="button" role="tab" aria-selected="false" data-tab="preview">预览</button>
-      <span class="hint">Markdown 格式，可直接粘贴或拖入图片</span>
+    <div class="editor-bar">
+      <div class="tabs" role="tablist" aria-label="编辑与预览">
+        <button type="button" role="tab" aria-selected="true" data-tab="edit">编辑</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="preview">预览</button>
+      </div>
+      <!-- 工具栏：每个按钮在光标处插入或包裹一段 Markdown，具体行为见 writer.ts 的 TOOLS -->
+      <div class="tools" role="toolbar" aria-label="插入格式" data-tools>
+        <span class="group">
+          <button type="button" data-tool="h2" title="二级标题">H2</button>
+          <button type="button" data-tool="h3" title="三级标题">H3</button>
+          <button type="button" data-tool="h4" title="四级标题">H4</button>
+        </span>
+        <span class="group">
+          <button type="button" data-tool="bold" title="粗体（Ctrl+B）"><b>B</b></button>
+          <button type="button" data-tool="italic" title="斜体（Ctrl+I）"><i>I</i></button>
+          <button type="button" data-tool="link" title="链接（Ctrl+K）">链接</button>
+        </span>
+        <span class="group">
+          <button type="button" data-tool="ul" title="列表">列表</button>
+          <button type="button" data-tool="ol" title="编号列表">编号</button>
+          <button type="button" data-tool="quote" title="引用">引用</button>
+          <button type="button" data-tool="table" title="表格">表格</button>
+        </span>
+        <span class="group">
+          <button type="button" data-tool="code" title="行内代码"><code>`x`</code></button>
+          <button type="button" data-tool="codeblock" title="代码块，在 ``` 后写语言名，如 python">代码块</button>
+        </span>
+        <span class="group">
+          <button type="button" data-tool="math" title="行内公式 $…$">公式</button>
+          <button type="button" data-tool="mathblock" title="独立成行的公式 $$…$$">公式块</button>
+        </span>
+        <span class="group">
+          <button type="button" data-tool="image" title="插入图片（也可直接粘贴或拖入）">图片</button>
+          <input type="file" accept="image/*" multiple hidden data-image-picker />
+        </span>
+      </div>
     </div>
-    <textarea class="body" name="body" placeholder="正文" spellcheck="false"></textarea>
+    <textarea class="body" name="body" placeholder="正文。Markdown 格式，可用上方按钮插入标题、代码、公式，图片可直接粘贴或拖入" spellcheck="false"></textarea>
     <div class="preview prose" data-preview hidden></div>
 
     <div class="actions">
@@ -196,12 +229,24 @@ const data = {
     color: var(--color-rule);
   }
 
+  /* 编辑栏：编辑/预览切换 + 工具栏，写长文时贴在窗口顶部 */
+  .editor-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1.25rem;
+    margin-top: 1rem;
+    padding-top: 0.25rem;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-rule);
+  }
+
   .tabs {
     display: flex;
-    align-items: baseline;
     gap: 1rem;
-    margin-top: 1rem;
-    border-bottom: 1px solid var(--color-rule);
   }
 
   .tabs button {
@@ -221,10 +266,45 @@ const data = {
     border-bottom-color: var(--color-text);
   }
 
-  .hint {
-    margin-left: auto;
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    padding-block: 0.25rem;
+  }
+
+  .tools[hidden] {
+    display: none;
+  }
+
+  /* 同类按钮挨在一起，组与组之间留空；放不下时整组换行 */
+  .group {
+    display: inline-flex;
+    gap: 0.1rem;
+  }
+
+  .tools button {
+    font: inherit;
     font-size: var(--text-sm);
     color: var(--color-muted);
+    min-width: 1.9rem;
+    padding: 0.2rem 0.4rem;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .tools button:hover,
+  .tools button:focus-visible {
+    color: var(--color-accent);
+    border-color: var(--color-rule);
+  }
+
+  .tools code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
   }
 
   .body {
@@ -301,8 +381,5 @@ const data = {
       font-size: var(--text-2xl);
     }
 
-    .hint {
-      display: none;
-    }
   }
 </style>

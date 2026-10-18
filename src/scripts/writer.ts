@@ -1,6 +1,11 @@
-// 写作页 /write/ 的交互：表单联动、自动存稿、图片粘贴与拖入、预览、发布到 GitHub。
+// 写作页 /write/ 的交互：表单联动、自动存稿、工具栏、图片粘贴与拖入、预览、发布到 GitHub。
 // 页面结构与样式在 src/pages/write.astro。
-import { marked } from 'marked';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
+import { remarkPlugins, rehypePlugins } from '../plugins/markdown.mjs';
 import { getToken } from './login';
 import { REPO } from '../consts';
 
@@ -196,13 +201,121 @@ function autoGrow() {
 }
 body.addEventListener('input', autoGrow);
 
+/**
+ * 用 text 替换 [start, end) 这段正文，并选中替换后文字里的 [selStart, selEnd)（相对 text 开头）。
+ * 优先用 execCommand('insertText')：它保留浏览器的撤销记录，Ctrl+Z 能撤回按钮插入的内容；
+ * 不支持时退回 setRangeText（不能撤销，但内容正确）。
+ */
+function replaceRange(start: number, end: number, text: string, selStart = text.length, selEnd = selStart) {
+  body.focus();
+  body.setSelectionRange(start, end);
+  if (!document.execCommand('insertText', false, text)) {
+    body.setRangeText(text, start, end, 'end');
+    body.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  body.setSelectionRange(start + selStart, start + selEnd);
+}
+
 /** 在光标处插入文字 */
 function insertAtCursor(text: string) {
-  const { selectionStart: start, selectionEnd: end, value } = body;
-  body.value = value.slice(0, start) + text + value.slice(end);
-  body.selectionStart = body.selectionEnd = start + text.length;
-  body.dispatchEvent(new Event('input', { bubbles: true }));
+  replaceRange(body.selectionStart, body.selectionEnd, text);
 }
+
+// ---------- 工具栏 ----------
+
+/** 用 before / after 包住选中的文字；没选中时插入示例文字并选中它，方便直接改 */
+function wrap(before: string, after: string, example: string) {
+  const { selectionStart: start, selectionEnd: end, value } = body;
+  const inner = value.slice(start, end) || example;
+  replaceRange(start, end, before + inner + after, before.length, before.length + inner.length);
+}
+
+/** 选中的每一行（光标所在行）的范围 */
+function selectedLines() {
+  const { selectionStart, selectionEnd, value } = body;
+  const start = value.lastIndexOf('\n', selectionStart - 1) + 1;
+  const nl = value.indexOf('\n', selectionEnd);
+  const end = nl === -1 ? value.length : nl;
+  return { start, end, lines: value.slice(start, end).split('\n') };
+}
+
+/** 设定标题级别：去掉行首已有的 #，换成 level 个；同级再点一次则取消标题 */
+function heading(level: number) {
+  const { start, end, lines } = selectedLines();
+  const mark = '#'.repeat(level) + ' ';
+  const toggleOff = lines.every((l) => l.startsWith(mark));
+  const text = lines.map((l) => (toggleOff ? '' : mark) + l.replace(/^#{1,6}\s+/, '')).join('\n');
+  replaceRange(start, end, text);
+}
+
+/** 行首标记（列表、引用）：所有行都有时去掉，否则加上。编号列表按行编号 */
+function linePrefix(prefix: (i: number) => string, pattern: RegExp) {
+  const { start, end, lines } = selectedLines();
+  const toggleOff = lines.every((l) => pattern.test(l));
+  const text = lines.map((l, i) => (toggleOff ? l.replace(pattern, '') : prefix(i) + l)).join('\n');
+  replaceRange(start, end, text);
+}
+
+/**
+ * 插入独立成段的内容（代码块、公式块、表格）：前后各留一个空行，与上下文隔开。
+ * 选中 example 那一段，直接输入即可替换
+ */
+function block(open: string, example: string, close: string) {
+  const { selectionStart: start, selectionEnd: end, value } = body;
+  const inner = value.slice(start, end) || example;
+  const before = value.slice(0, start);
+  const lead = before === '' || before.endsWith('\n\n') ? '' : before.endsWith('\n') ? '\n' : '\n\n';
+  const after = value.slice(end);
+  const tail = after.startsWith('\n\n') ? '' : after.startsWith('\n') ? '\n' : '\n\n';
+  const text = lead + open + inner + close + tail;
+  replaceRange(start, end, text, lead.length + open.length, lead.length + open.length + inner.length);
+}
+
+const imagePicker = form.querySelector<HTMLInputElement>('[data-image-picker]')!;
+
+const TOOLS: Record<string, () => void> = {
+  h2: () => heading(2),
+  h3: () => heading(3),
+  h4: () => heading(4),
+  bold: () => wrap('**', '**', '粗体'),
+  italic: () => wrap('*', '*', '斜体'),
+  link: () => {
+    const { selectionStart: start, selectionEnd: end, value } = body;
+    const label = value.slice(start, end) || '链接文字';
+    // 选中网址部分，粘贴即可
+    replaceRange(start, end, `[${label}](https://)`, label.length + 3, label.length + 11);
+  },
+  ul: () => linePrefix(() => '- ', /^[-*+]\s+/),
+  ol: () => linePrefix((i) => `${i + 1}. `, /^\d+\.\s+/),
+  quote: () => linePrefix(() => '> ', /^>\s?/),
+  table: () => block('', '| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |', ''),
+  code: () => wrap('`', '`', 'code'),
+  // 选中示例文字，直接输入代码；在开头的 ``` 后补上语言名（python、cpp、bash……）上线后有语法高亮
+  codeblock: () => block('```\n', '代码', '\n```'),
+  math: () => wrap('$', '$', 'x^2'),
+  mathblock: () => block('$$\n', '\\int_0^1 f(x)\\,dx', '\n$$'),
+  image: () => imagePicker.click(),
+};
+
+const tools = form.querySelector<HTMLElement>('[data-tools]')!;
+tools.addEventListener('click', (e) => {
+  const button = (e.target as Element).closest<HTMLButtonElement>('[data-tool]');
+  if (button) TOOLS[button.dataset.tool!]();
+});
+imagePicker.addEventListener('change', () => {
+  addImages([...(imagePicker.files ?? [])]);
+  imagePicker.value = '';
+});
+
+// 快捷键：Ctrl/⌘ + B 粗体、I 斜体、K 链接
+body.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+  const tool = { b: 'bold', i: 'italic', k: 'link' }[e.key.toLowerCase()];
+  if (tool) {
+    e.preventDefault();
+    TOOLS[tool]();
+  }
+});
 
 const EXT: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp', 'image/svg+xml': 'svg' };
 
@@ -245,8 +358,18 @@ const usedImages = () => [...images.keys()].filter((name) => body.value.includes
 
 const objectUrls = new Map<string, string>();
 
+// 与网站构建用同一套插件（src/plugins/markdown.mjs），预览里的公式、对话分段与上线后一致。
+// 不含代码高亮与图片压缩，这两项只在构建时做
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkPlugins)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypePlugins)
+  .use(rehypeStringify, { allowDangerousHtml: true });
+
 function renderPreview() {
-  preview.innerHTML = marked.parse(body.value, { async: false }) as string;
+  preview.innerHTML = String(processor.processSync(body.value));
   // 把 ./img-xxx.png 换成浏览器里的图片地址，预览时才能显示
   for (const img of preview.querySelectorAll('img')) {
     const name = (img.getAttribute('src') ?? '').replace(/^\.\//, '');
@@ -264,6 +387,7 @@ for (const tab of form.querySelectorAll<HTMLButtonElement>('[data-tab]')) {
     if (showPreview) renderPreview();
     preview.hidden = !showPreview;
     body.hidden = showPreview;
+    tools.hidden = showPreview;
   });
 }
 
