@@ -10,25 +10,19 @@ type Post = CollectionEntry<'posts'>;
 
 export async function getStaticPaths() {
   const entries = await getEntries('posts');
-  return entries.map((entry, i) => ({
-    params: { slug: entry.id },
-    // entries 从新到旧排列：newer 是更新的一篇，older 是更早的一篇
-    props: { entry, newer: entries[i - 1], older: entries[i + 1] },
-  }));
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
 
 interface Props {
   entry: Post;
-  newer?: Post;
-  older?: Post;
 }
 
-const { entry, newer, older } = Astro.props;
+const { entry } = Astro.props;
 const { ai, note } = entry.data;
 const { Content } = await render(entry);
 ---
 
-<EntryLayout entry={entry} newer={newer} older={older}>
+<EntryLayout entry={entry}>
   {ai && <span slot="meta">对话对象：{ai}</span>}
   {note && <p slot="intro" class="note">{note}</p>}
   <Content />

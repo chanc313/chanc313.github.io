@@ -1,5 +1,5 @@
 ---
-// 单条内容页面的布局：标题、日期、标签、正文、上一篇/下一篇。
+// 单条内容页面的布局：标题、日期、标签、正文；系列文章底部有上一篇/下一篇。
 // 所有栏目的内容页共用；栏目各自的差异通过两个插槽补充：
 //   slot="meta"   日期后面追加的信息（如对话对象）
 //   slot="intro"  标题区与正文之间的内容（如对话批注）
@@ -10,17 +10,16 @@ import { formatDate, entryUrl, type Entry } from '../utils';
 
 interface Props {
   entry: Entry;
-  newer?: Entry;
-  older?: Entry;
+  /** 系列里的上一篇、下一篇。只有系列文章传入；不按日期给普通文章翻页（博客主人 2026-10-18） */
+  prev?: Entry;
+  next?: Entry;
   /** 加在正文容器上的额外 class，供栏目定制正文样式 */
   bodyClass?: string;
-  /** 翻页链接的说明文字，默认按日期（更早 / 更新）；按目录顺序翻页时传 ['上一篇', '下一篇'] */
-  pagerLabels?: [string, string];
   /** 见 Header 的 columnOverride */
   columnOverride?: { id: string; label: string; href: string };
 }
 
-const { entry, newer, older, bodyClass, pagerLabels = ['更早', '更新'], columnOverride } = Astro.props;
+const { entry, prev, next, bodyClass, columnOverride } = Astro.props;
 const { title, description, date, updated, tags } = entry.data;
 ---
 
@@ -55,20 +54,20 @@ const { title, description, date, updated, tags } = entry.data;
   </article>
 
   {
-    (newer || older) && (
+    (prev || next) && (
       <nav class="pager" aria-label="上一篇和下一篇">
-        {older ? (
-          <a href={entryUrl(older)} class="older">
-            <span>{pagerLabels[0]}</span>
-            {older.data.title}
+        {prev ? (
+          <a href={entryUrl(prev)}>
+            <span>上一篇</span>
+            {prev.data.title}
           </a>
         ) : (
           <span />
         )}
-        {newer && (
-          <a href={entryUrl(newer)} class="newer">
-            <span>{pagerLabels[1]}</span>
-            {newer.data.title}
+        {next && (
+          <a href={entryUrl(next)} class="next">
+            <span>下一篇</span>
+            {next.data.title}
           </a>
         )}
       </nav>
@@ -144,7 +143,7 @@ const { title, description, date, updated, tags } = entry.data;
     margin-bottom: 0.25rem;
   }
 
-  .newer {
+  .next {
     text-align: right;
   }
 

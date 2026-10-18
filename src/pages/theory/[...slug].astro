@@ -38,13 +38,11 @@ export async function getStaticPaths() {
     ),
   );
 
-  // 单篇文章：在同一话题（或未归入话题的文章）内按日期翻页；列表从新到旧
-  const byDate = (list: TheoryEntry[], topic?: Topic) =>
-    list.map((entry, i) => ({
-      params: { slug: entry.id },
-      props: { topic, entry, prev: list[i + 1], next: list[i - 1] },
-    }));
-  const singleEntries = [...trees.flatMap((t) => byDate(t.singles, t.topic)), ...byDate(loose)];
+  // 单篇文章：不翻页
+  const singleEntries = [
+    ...trees.flatMap(({ topic, singles }) => singles.map((entry) => ({ params: { slug: entry.id }, props: { topic, entry } }))),
+    ...loose.map((entry) => ({ params: { slug: entry.id }, props: { entry } })),
+  ];
 
   return [...topicPages, ...seriesEntries, ...singleEntries];
 }
@@ -66,9 +64,8 @@ const Content = entry ? (await render(entry)).Content : null;
   entry && Content ? (
     <EntryLayout
       entry={entry}
-      older={prev}
-      newer={next}
-      pagerLabels={series ? ['上一篇', '下一篇'] : ['更早', '更新']}
+      prev={prev}
+      next={next}
       columnOverride={topic && { id: 'theory', label: topic.data.title, href: `/theory/${topic.id}/` }}
     >
       {series && <SeriesNav slot="aside" series={series} topic={topic!.id} />}
