@@ -12,9 +12,11 @@ interface Props {
   description?: string;
   /** 见 Header 的 columnOverride */
   columnOverride?: { id: string; label: string; href: string };
+  /** 不让搜索引擎收录（如写作页） */
+  noindex?: boolean;
 }
 
-const { title, description = SITE_DESCRIPTION, columnOverride } = Astro.props;
+const { title, description = SITE_DESCRIPTION, columnOverride, noindex = false } = Astro.props;
 const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
@@ -26,6 +28,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />

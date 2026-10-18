@@ -13,6 +13,7 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.8",
-    "lxgw-wenkai-screen-webfont": "^1.7.0"
+    "lxgw-wenkai-screen-webfont": "^1.7.0",
+    "marked": "18.0.14"
   }
 }

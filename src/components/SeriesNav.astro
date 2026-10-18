@@ -4,13 +4,17 @@
 // 宽屏：贴在窗口左边缘，平时只露出一个「目录」把手；鼠标移到把手上展开，移开收起，
 //       盖在正文上方，随页面滚动保持不动。点击把手可固定展开，再点一次、按 Esc 或点别处收起。
 // 手机：放在页面顶部，作为普通的折叠目录，点「目录」展开。
+import WriteLink from './WriteLink.astro';
 import { entryUrl, type Series } from '../utils';
 
 interface Props {
   series: Series;
+  /** 系列所属话题的 id，用于「续写这个系列」链接 */
+  topic: string;
 }
 
-const { series } = Astro.props;
+const { series, topic } = Astro.props;
+const continueHref = `/write/?${new URLSearchParams({ column: 'theory', topic, series: series.name })}`;
 const path = Astro.url.pathname;
 ---
 
@@ -29,6 +33,7 @@ const path = Astro.url.pathname;
         ))
       }
     </ol>
+    <p class="continue"><WriteLink href={continueHref} label="＋ 续写这个系列" /></p>
   </nav>
 </aside>
 
@@ -90,6 +95,14 @@ const path = Astro.url.pathname;
   .panel a[aria-current='page'] {
     color: var(--color-accent);
     font-weight: 600;
+  }
+
+  .continue {
+    margin: 1rem 0 0;
+  }
+
+  .continue:has([hidden]) {
+    display: none;
   }
 
   .handle {

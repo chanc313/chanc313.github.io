@@ -19,7 +19,8 @@ export default defineConfig({
   integrations: [
     // 结构检查：栏目文件是否齐全、后台配置是否同步、独立页面名是否与已有网址冲突（说明见集成文件开头）
     structureCheck({ columns: COLUMNS }),
-    sitemap(),
+    // 写作页只供博客主人使用，不进入站点地图
+    sitemap({ filter: (page) => !page.includes('/write/') }),
     // 页面资源包：把每个页面文件夹里的私有资源发布到该页面网址下（说明见集成文件开头）
     pageBundles({
       // 各栏目从 src/columns.ts 读取，新增栏目无需改这里；独立页面在站点根目录下
