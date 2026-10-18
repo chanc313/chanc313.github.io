@@ -22,6 +22,12 @@ export const COLUMNS = [
     path: '/chats/',
     description: '与 AI 对话中值得留下的记录',
   },
+  {
+    id: 'ros',
+    label: 'ROS学习',
+    path: '/ros/',
+    description: '学习 ROS（机器人操作系统）的笔记',
+  },
 ] as const;
 
 export type Column = (typeof COLUMNS)[number];

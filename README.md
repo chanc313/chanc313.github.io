@@ -9,7 +9,7 @@ chanc313 的个人博客：<https://chanc313.github.io>
 | 项目 | 状态 |
 |---|---|
 | 上线 | 2026-10-14，GitHub Pages |
-| 栏目 | 文章（1 篇）、AI对话（1 篇） |
+| 栏目 | 文章（1 篇）、AI对话（1 篇）、ROS学习（0 篇） |
 | 独立页面 | 关于（正文仍是占位文字） |
 | 内容后台 | `/admin/` 可用，支持 GitHub 登录与访问令牌登录 |
 | 自动检查 | 每次构建检查网站结构；PR 合并前自动构建一次 |
@@ -31,6 +31,8 @@ chanc313 的个人博客：<https://chanc313.github.io>
 | `/posts/<页面名>/` | 一篇文章 |
 | `/chats/` | 栏目「AI对话」的目录 |
 | `/chats/<页面名>/` | 一段对话记录：按「我 / AI」分段显示，正文前可有一段批注 |
+| `/ros/` | 栏目「ROS学习」的目录 |
+| `/ros/<页面名>/` | 一篇 ROS 学习笔记 |
 | `/tags/`、`/tags/<标签>/` | 全部标签；某个标签下的所有内容（跨栏目） |
 | `/about/` 等 | 独立页面，不属于任何栏目 |
 | `/rss.xml` | RSS 订阅，包含全部栏目 |
@@ -45,6 +47,7 @@ chanc313 的个人博客：<https://chanc313.github.io>
  ─────────────────       ─────────────────       ─────────────────       ─────────────
  src/content/posts/  ┐   src/columns.ts          src/pages/   网址与页面一一对应
  src/content/chats/  ├─▶ 栏目登记表          ─▶   src/layouts/ 页面骨架          ─▶ GitHub Actions
+ src/content/ros/    │
  src/content/pages/  ┘   src/content.config.ts   src/components/ 页头、目录等       构建并发布到
                          每类内容可填的字段       src/styles/  颜色、字体、排版        GitHub Pages
 ```
@@ -68,7 +71,7 @@ chanc313 的个人博客：<https://chanc313.github.io>
 
 | 类型 | 是什么 | 例子 |
 |---|---|---|
-| 栏目 | 一类按日期排列的内容，有自己的目录页，进入首页汇总和 RSS | 文章、AI对话 |
+| 栏目 | 一类按日期排列的内容，有自己的目录页，进入首页汇总和 RSS | 文章、AI对话、ROS学习 |
 | 独立页面 | 不按日期排列的单页，网址在站点根目录 | 关于 |
 | 标签 | 跨栏目的分类，由内容里的 `tags` 自动汇总，无需登记 | 建站记录、随笔 |
 
@@ -141,7 +144,7 @@ AI 推送或合并 PR ──┘
 ```
 .
 ├── src/
-│   ├── content/            内容：posts/ chats/ pages/，每个页面一个文件夹
+│   ├── content/            内容：posts/ chats/ ros/ pages/，每个页面一个文件夹
 │   ├── columns.ts          栏目登记表
 │   ├── content.config.ts   每类内容可填的字段
 │   ├── consts.ts           站名、首页介绍文字、GitHub 链接

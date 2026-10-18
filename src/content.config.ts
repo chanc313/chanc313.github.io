@@ -50,6 +50,12 @@ const chats = defineCollection({
   }),
 });
 
+// 栏目：ROS学习
+const ros = defineCollection({
+  loader: bundles('./src/content/ros'),
+  schema: entry,
+});
+
 // 独立页面（不属于任何栏目，如"关于"），网址为 /<页面名>/
 const pages = defineCollection({
   loader: bundles('./src/content/pages'),
@@ -60,4 +66,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, chats, pages };
+export const collections = { posts, chats, ros, pages };

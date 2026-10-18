@@ -81,6 +81,29 @@ collections:
         widget: markdown
         hint: 单独一行 @me 或 @ai 标记每段发言的开始
 
+  - name: ros
+    label: ROS学习
+    label_singular: 笔记
+    folder: src/content/ros
+    path: '{{slug}}/index'
+    media_folder: ''
+    public_folder: ''
+    extension: md
+    format: frontmatter
+    create: true
+    slug:
+      editable: [create]
+    sortable_fields: [date, title]
+    summary: '{{title}}（{{date}}）'
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
+      - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
+      - { name: tags, label: 标签, widget: list, required: false, default: [] }
+      - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
+      - { name: body, label: 正文, widget: markdown }
+
   - name: pages
     label: 独立页面
     label_singular: 页面
