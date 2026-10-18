@@ -97,11 +97,7 @@ collections:
     summary: '{{title}}（{{date}}）'
     fields:
       - { name: title, label: 标题, widget: string }
-      - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
-      - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
-      - { name: tags, label: 标签, widget: list, required: false, default: [] }
-      - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
-      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
+      # 话题与系列放在标题下方：技术理论的文章写作时最先要决定的就是放在哪
       - name: topic
         label: 话题
         widget: relation
@@ -110,8 +106,21 @@ collections:
         search_fields: [title]
         display_fields: [title]
         required: false
-        hint: 不选则列在「未归入话题」
-      - { name: series, label: 系列, widget: string, required: false, hint: 必须与所选话题的「系列」列表中的一项完全一致；不属于系列就留空 }
+        hint: 不选则列在技术理论首页的「未归入话题」
+      - name: series
+        label: 系列
+        widget: relation
+        collection: topics
+        value_field: 'series.*.name'
+        display_fields: ['series.*.name']
+        search_fields: ['series.*.name']
+        required: false
+        hint: 单篇文章留空。选项是所有话题的系列，请选所属话题下的那个；新系列先在「技术理论话题」里添加
+      - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
+      - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
+      - { name: tags, label: 标签, widget: list, required: false, default: [] }
+      - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
       - { name: body, label: 正文, widget: markdown }
 
   # 技术理论的话题：网址为 /theory/<文件夹名>/，文件夹名不能与技术理论的文章重名
@@ -133,7 +142,14 @@ collections:
       - { name: title, label: 名称, widget: string }
       - { name: description, label: 简介, widget: text, required: false, hint: 一句话，用于搜索引擎，页面上不显示 }
       - { name: order, label: 排序, widget: number, value_type: int, default: 0, required: false, hint: 数字小的排在前面 }
-      - { name: series, label: 系列, widget: list, required: false, default: [], hint: 话题内的系列名，如 学习笔记；文章填同样的名字即归入该系列 }
+      - name: series
+        label: 系列
+        widget: list
+        required: false
+        default: []
+        hint: 话题内的系列，如 学习笔记。添加后，写技术理论文章时可在「系列」下拉框中选择
+        fields:
+          - { name: name, label: 系列名, widget: string }
 
   - name: pages
     label: 独立页面

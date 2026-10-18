@@ -61,14 +61,16 @@ const theory = defineCollection({
 });
 
 // 技术理论的话题（如 ROS、控制理论），网址为 /theory/<话题名>/。
-// 正文是话题导读；series 列出话题内的系列，顺序即侧栏和话题页中的顺序
+// series 列出话题内的系列。每项写成 { name: 系列名 }（后台的写法，便于文章从下拉框选择），
+// 也接受直接写字符串
 const topics = defineCollection({
   loader: bundles('./src/content/topics'),
   schema: z.object({
     title: z.string(),
     description: optional(z.string()),
     order: optional(z.number()).transform((v) => v ?? 0), // 话题之间的排序，小的在前
-    series: optional(z.array(z.string())).transform((v) => v ?? []),
+    series: optional(z.array(z.union([z.string(), z.object({ name: z.string() })])))
+      .transform((v) => (v ?? []).map((s) => (typeof s === 'string' ? s : s.name))),
   }),
 });
 

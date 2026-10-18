@@ -88,7 +88,7 @@
 | `topic` | 字符串 | theory | 话题 id；不存在时构建报错 |
 | `series` | 字符串 | theory | 系列名，须在该话题的 `series` 列表中 |
 
-话题（`topics`）字段：`title`、`description`、`order`（数字，小的在前）、`series`（字符串数组）。
+话题（`topics`）字段：`title`、`description`、`order`（数字，小的在前）、`series`（`{ name }` 数组，也接受字符串数组）。写成对象是为了让后台文章的「系列」能用 relation 字段 `value_field: series.*.name` 做成选择框（Sveltia 的通配只说明支持列表子字段）；该选择框列出所有话题的系列，不能按所选话题过滤，选错由构建校验报错。
 
 ### 对话记录
 
