@@ -27,10 +27,11 @@
 - **颜色、字体、尺寸只在 `src/styles/tokens.css` 定义**，其他地方用 `var(--...)` 引用，不写死色值。新增颜色时，浅色和两段深色规则都要补上。
 - 组件样式写在组件底部的 `<style>`（Astro 自动限定作用域）；只有全站通用规则放 `src/styles/global.css`。
 - 正文排版统一用 `.prose`；对话记录的每段发言是 `.turn`，内部排版与 `.prose` 共用规则。
-- 尽量不加客户端 JavaScript；需要交互时用组件内的 `<script>`，不依赖第三方库（例外：写作页的 `marked`，博客主人 2026-10-18 同意，只打包进 `/write/`）。
+- 尽量不加客户端 JavaScript；需要交互时用组件内的 `<script>`，不依赖第三方库（例外：写作页打包 unified 管线与 KaTeX 做预览，只在 `/write/` 加载）。
 - **博客页面不加载第三方 JavaScript**（CDN 脚本、统计代码、外部组件等）。后台 `/admin/` 与博客同源，登录令牌存在同源 localStorage（键 `sveltia-cms.user`），第三方脚本可读取。需要第三方功能（如评论）时选 iframe 隔离的方案。
 - 代码注释用中文，写清楚"这段是干什么的"。
-- Markdown 用 unified（remark/rehype）管线（`astro.config.mjs` 的 `processor: unified(...)`）。自定义处理写成 remark/rehype 插件，放 `src/plugins/`。
+- Markdown 用 unified（remark/rehype）管线（`astro.config.mjs` 的 `processor: unified(...)`）。插件清单在 `src/plugins/markdown.mjs`（构建与写作页预览共用）；自定义处理写成 remark/rehype 插件，放 `src/plugins/`。
+- 数学公式：remark-math + rehype-katex，构建时输出 HTML。KaTeX 样式 `src/styles/math.css` 在 `EntryLayout`、`PageLayout`、写作页引入。`katex` 版本须与 rehype-katex 依赖的版本一致（`npm ls katex` 只应有一份），否则样式与输出可能不匹配。
 - 全站文字设置（站名、首页介绍）在 `src/consts.ts`。
 
 ## 栏目
@@ -139,7 +140,8 @@ GitHub 登录经 Sveltia CMS Authenticator（Cloudflare Worker）完成 OAuth �
 - 构建时数据：栏目、话题与系列、各栏目已占用的页面名（含草稿；`theory` 还含话题名），以 JSON 嵌入页面。发布前再用 `GET /contents/...` 确认目录不存在。
 - 发布：GitHub Git Data API（blobs → trees → commits → 更新 `refs/heads/main`，ref 冲突时重试），文章与图片一次提交，路径 `src/content/<栏目>/<页面名>/`。仓库名在 `src/consts.ts` 的 `REPO`。frontmatter 字符串用 `JSON.stringify` 写（合法 YAML）。
 - 草稿：文字存 localStorage（`write-draft`），图片存 IndexedDB（库 `write-draft`）。发布或「清空」后删除。只提交正文仍引用的图片。
-- 预览用 `marked`（唯一新增依赖，只打包进写作页），与站点 unified 管线不完全一致（不含对话分段、图片优化），仅作排版参考。
+- 预览在浏览器里跑与构建相同的插件清单（`src/plugins/markdown.mjs`），只缺 Shiki 代码高亮与图片优化。插件改动只改这个清单。
+- 工具栏：`write.astro` 的 `data-tool` 按钮对应 `writer.ts` 的 `TOOLS`。插入走 `replaceRange()`，用 `execCommand('insertText')` 保留撤销记录。
 - 写作页 `noindex`，不进 sitemap（`astro.config.mjs` 的 `filter`）。
 
 ## 部署

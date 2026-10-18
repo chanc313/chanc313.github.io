@@ -1,0 +1,9 @@
+/* 数学公式样式：KaTeX 自带的排版与字体（字体随网站自托管，页面用到公式时浏览器才下载） */
+@import 'katex/dist/katex.min.css';
+
+/* 独立成行的长公式在窄屏上横向滚动，不撑破页面 */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25em 0;
+}
