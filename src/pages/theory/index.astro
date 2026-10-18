@@ -1,10 +1,59 @@
 ---
-// "技术理论"栏目首页：/theory/
-import ColumnLayout from '../../layouts/ColumnLayout.astro';
+// "技术理论"栏目首页：/theory/。与其他栏目不同，这里是话题的扁平列表（类似标签页），
+// 点进话题才看到文章目录
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EntryIndex from '../../components/EntryIndex.astro';
 import { getColumn } from '../../columns';
-import { getEntries } from '../../utils';
+import { getTheoryTree } from '../../utils';
 
-const entries = await getEntries('theory');
+const column = getColumn('theory');
+const { trees, loose } = await getTheoryTree();
 ---
 
-<ColumnLayout column={getColumn('theory')} entries={entries} />
+<BaseLayout title={column.label} description={column.description}>
+  <h1 class="visually-hidden">{column.label}</h1>
+  <ul class="topic-list">
+    {
+      trees.map(({ topic, count }) => (
+        <li>
+          <a href={`/theory/${topic.id}/`}>{topic.data.title}</a>
+          <span>{count}</span>
+        </li>
+      ))
+    }
+  </ul>
+  {
+    loose.length > 0 && (
+      <section class="loose">
+        <h2>未归入话题</h2>
+        <EntryIndex entries={loose} />
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .topic-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .topic-list a {
+    font-size: var(--text-lg);
+  }
+
+  .topic-list span {
+    margin-left: 0.4rem;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .loose h2 {
+    font-size: var(--text-xl);
+    margin: 3rem 0 1rem;
+  }
+</style>

@@ -7,7 +7,7 @@ const tags = countTags(await getAllEntries());
 ---
 
 <BaseLayout title="标签">
-  <h1>标签</h1>
+  <h1 class="visually-hidden">标签</h1>
   {
     tags.length > 0 ? (
       <ul class="tag-list">
@@ -25,11 +25,6 @@ const tags = countTags(await getAllEntries());
 </BaseLayout>
 
 <style>
-  h1 {
-    font-size: var(--text-2xl);
-    margin: 1rem 0 2rem;
-  }
-
   .tag-list {
     display: flex;
     flex-wrap: wrap;

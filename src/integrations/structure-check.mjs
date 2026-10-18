@@ -10,10 +10,14 @@
 //   3. src/content/ 下没有未登记的目录（未登记的目录不会生成任何页面）
 //   4. 独立页面名不与已有网址冲突：如 tags、admin、posts。
 //      冲突时 Astro 只给一条警告并跳过该页面，页面会"消失"。
+//   5. 技术理论的话题名（src/content/topics/）不与技术理论的文章名重名：两者网址都是 /theory/<名字>/
 
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+/** 栏目以外的内容集合：独立页面、技术理论的话题 */
+const EXTRA_COLLECTIONS = ['pages', 'topics'];
 
 /**
  * @param {{ columns: readonly { id: string }[] }} options  栏目列表，来自 src/columns.ts
@@ -29,6 +33,7 @@ export default function structureCheck({ columns }) {
           ...checkAdminConfig(root, columns),
           ...checkContentDirs(root, columns),
           ...checkPageNames(root),
+          ...checkTopicNames(root),
         ];
         if (errors.length > 0) {
           throw new Error(`网站结构检查未通过：\n${errors.map((e) => `  - ${e}`).join('\n')}`);
@@ -56,14 +61,14 @@ function checkAdminConfig(root, columns) {
   const file = join(root, 'public/admin/config.yml');
   if (!existsSync(file)) return [];
   const text = readFileSync(file, 'utf-8');
-  return [...columns.map((c) => c.id), 'pages']
+  return [...columns.map((c) => c.id), ...EXTRA_COLLECTIONS]
     .filter((id) => !new RegExp(`^\\s*folder:\\s*['"]?src/content/${id}['"]?\\s*$`, 'm').test(text))
     .map((id) => `public/admin/config.yml 中没有 folder: src/content/${id} 的集合，后台无法编辑该栏目`);
 }
 
-/** 3. src/content/ 下的每个目录都应是登记过的栏目或 pages */
+/** 3. src/content/ 下的每个目录都应是登记过的栏目或 EXTRA_COLLECTIONS */
 function checkContentDirs(root, columns) {
-  const known = new Set([...columns.map((c) => c.id), 'pages']);
+  const known = new Set([...columns.map((c) => c.id), ...EXTRA_COLLECTIONS]);
   return subdirs(join(root, 'src/content'))
     .filter((name) => !known.has(name))
     .map((name) => `src/content/${name}/ 不是已登记的栏目，其中的内容不会生成页面（在 src/columns.ts 登记，或移走该目录）`);
@@ -82,6 +87,14 @@ function checkPageNames(root) {
   return subdirs(join(root, 'src/content/pages'))
     .filter((name) => taken.has(name))
     .map((name) => `独立页面 src/content/pages/${name}/ 的网址 /${name}/ 已被占用，请给页面文件夹换个名字`);
+}
+
+/** 5. 话题页 /theory/<话题名>/ 与文章页 /theory/<文章名>/ 共用一层网址 */
+function checkTopicNames(root) {
+  const articles = new Set(subdirs(join(root, 'src/content/theory')));
+  return subdirs(join(root, 'src/content/topics'))
+    .filter((name) => articles.has(name))
+    .map((name) => `话题 src/content/topics/${name}/ 与文章 src/content/theory/${name}/ 同名，网址 /theory/${name}/ 冲突，请给其中一个换名字`);
 }
 
 /** 目录下的子目录名（目录不存在时返回空列表） */

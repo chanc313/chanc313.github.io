@@ -1,30 +1,98 @@
 ---
-// "技术理论"栏目的内容页：src/content/theory/ 里每个资源包生成一个 /theory/<页面名>/ 页面
-import { render, type CollectionEntry } from 'astro:content';
+// "技术理论"栏目的两类页面，网址都在 /theory/ 下：
+//   话题页 /theory/<话题名>/   来自 src/content/topics/，按年份列出话题内容，一个系列算一项
+//   文章页 /theory/<页面名>/   来自 src/content/theory/，属于系列的文章带系列目录侧栏
+// 两者共用一层网址，同名会冲突，由 src/integrations/structure-check.mjs 在启动时检查。
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import EntryLayout from '../../layouts/EntryLayout.astro';
-import { getEntries } from '../../utils';
-
-type Post = CollectionEntry<'theory'>;
+import EntryIndex from '../../components/EntryIndex.astro';
+import SeriesNav from '../../components/SeriesNav.astro';
+import { getTheoryTree, entryUrl, type IndexItem, type Series, type TheoryEntry, type Topic } from '../../utils';
 
 export async function getStaticPaths() {
-  const entries = await getEntries('theory');
-  return entries.map((entry, i) => ({
-    params: { slug: entry.id },
-    // entries 从新到旧排列：newer 是更新的一篇，older 是更早的一篇
-    props: { entry, newer: entries[i - 1], older: entries[i + 1] },
-  }));
+  const { trees, loose } = await getTheoryTree();
+
+  // 话题页：单篇文章与系列混排，从新到旧；系列链接到第一篇，日期取最新一篇
+  const topicPages = trees.map(({ topic, series, singles }) => {
+    const items: IndexItem[] = [
+      ...singles.map((e) => ({ title: e.data.title, url: entryUrl(e), date: e.data.date, draft: e.data.draft })),
+      ...series.map((s) => ({
+        title: s.name,
+        url: entryUrl(s.entries[0]),
+        date: s.entries.at(-1)!.data.date,
+        label: `系列 · ${s.entries.length} 篇`,
+      })),
+    ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+    return { params: { slug: topic.id }, props: { topic, items } };
+  });
+
+  // 系列文章：按系列顺序翻页（上一篇 / 下一篇）
+  const seriesEntries = trees.flatMap(({ topic, series }) =>
+    series.flatMap((s) =>
+      s.entries.map((entry, i) => ({
+        params: { slug: entry.id },
+        props: { topic, series: s, entry, prev: s.entries[i - 1], next: s.entries[i + 1] },
+      })),
+    ),
+  );
+
+  // 单篇文章：在同一话题（或未归入话题的文章）内按日期翻页；列表从新到旧
+  const byDate = (list: TheoryEntry[], topic?: Topic) =>
+    list.map((entry, i) => ({
+      params: { slug: entry.id },
+      props: { topic, entry, prev: list[i + 1], next: list[i - 1] },
+    }));
+  const singleEntries = [...trees.flatMap((t) => byDate(t.singles, t.topic)), ...byDate(loose)];
+
+  return [...topicPages, ...seriesEntries, ...singleEntries];
 }
 
 interface Props {
-  entry: Post;
-  newer?: Post;
-  older?: Post;
+  topic?: Topic;
+  items?: IndexItem[];
+  series?: Series;
+  entry?: TheoryEntry;
+  prev?: TheoryEntry;
+  next?: TheoryEntry;
 }
 
-const { entry, newer, older } = Astro.props;
-const { Content } = await render(entry);
+const { topic, items, series, entry, prev, next } = Astro.props;
+const Content = entry ? (await render(entry)).Content : null;
 ---
 
-<EntryLayout entry={entry} newer={newer} older={older}>
-  <Content />
-</EntryLayout>
+{
+  entry && Content ? (
+    <EntryLayout
+      entry={entry}
+      older={prev}
+      newer={next}
+      pagerLabels={series ? ['上一篇', '下一篇'] : ['更早', '更新']}
+      columnOverride={topic && { id: 'theory', label: topic.data.title, href: `/theory/${topic.id}/` }}
+    >
+      {series && <SeriesNav slot="aside" series={series} />}
+      {topic && (
+        <Fragment slot="meta">
+          <a href={`/theory/${topic.id}/`}>{topic.data.title}</a>
+          {series && <span>系列：{series.name}</span>}
+        </Fragment>
+      )}
+      <Content />
+    </EntryLayout>
+  ) : (
+    <BaseLayout
+      title={topic!.data.title}
+      description={topic!.data.description}
+      columnOverride={{ id: 'theory', label: topic!.data.title, href: '/theory/' }}
+    >
+      <h1 class="visually-hidden">{topic!.data.title}</h1>
+      {items!.length > 0 ? <EntryIndex items={items} /> : <p class="empty">这个话题还没有内容。</p>}
+    </BaseLayout>
+  )
+}
+
+<style>
+  .empty {
+    color: var(--color-muted);
+  }
+</style>

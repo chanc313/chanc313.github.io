@@ -14,7 +14,7 @@ const { column, entries } = Astro.props;
 ---
 
 <BaseLayout title={column.label} description={column.description}>
-  <h1>{column.label}</h1>
+  <h1 class="visually-hidden">{column.label}</h1>
   {
     entries.length > 0 ? (
       <EntryIndex entries={entries} />
@@ -25,11 +25,6 @@ const { column, entries } = Astro.props;
 </BaseLayout>
 
 <style>
-  h1 {
-    font-size: var(--text-2xl);
-    margin: 1rem 0 2rem;
-  }
-
   .empty {
     color: var(--color-muted);
   }
