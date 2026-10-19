@@ -3,17 +3,21 @@
 //
 // 只对登录过后台的浏览器可用：页面读取后台保存的 GitHub 令牌，用它把文章提交到仓库。
 // 没有仓库写权限的人即使打开本页也无法提交。不被搜索引擎收录，不进站点地图。
-// 网址参数可预先选好栏目、话题、系列：/write/?column=theory&topic=ros&series=学习笔记
+// 网址参数可预先选好栏目、话题、系列、项目：/write/?column=theory&topic=ros&series=学习笔记、/write/?column=projects&project=robotics-lab
 // 交互逻辑在 src/scripts/writer.ts。修改、删除旧文章及管理话题仍在后台进行。
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import '../styles/math.css';
 import { COLUMNS } from '../columns';
 
-// 页面需要的数据：栏目、技术理论的话题与系列、已占用的网址名（含草稿，避免覆盖已有文章）
+// 页面需要的数据：栏目、技术理论的话题与系列、项目首页、已占用的网址名（含草稿，避免覆盖已有文章）
 const topics = (await getCollection('topics'))
   .sort((a, b) => a.data.order - b.data.order || a.id.localeCompare(b.id))
   .map((t) => ({ id: t.id, title: t.data.title, series: t.data.series }));
+const projects = (await getCollection('projects'))
+  .filter((p) => !p.data.project && !(import.meta.env.PROD && p.data.draft)) // 草稿项目的标题不公开
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .map((p) => ({ id: p.id, title: p.data.title }));
 const taken: Record<string, string[]> = {};
 for (const c of COLUMNS) taken[c.id] = (await getCollection(c.id)).map((e) => e.id);
 // 技术理论的文章与话题共用 /theory/<名字>/
@@ -22,6 +26,7 @@ taken.theory.push(...topics.map((t) => t.id));
 const data = {
   columns: COLUMNS.map((c) => ({ id: c.id, label: c.label, path: c.path })),
   topics,
+  projects,
   taken,
 };
 ---
@@ -47,6 +52,10 @@ const data = {
       <label data-theory-only>
         <span>系列</span>
         <select name="series"><option value="">单篇文章</option></select>
+      </label>
+      <label data-projects-only>
+        <span>项目</span>
+        <select name="project"><option value="">新项目（作为项目首页）</option></select>
       </label>
     </div>
 

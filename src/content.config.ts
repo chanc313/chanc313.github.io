@@ -45,10 +45,13 @@ const posts = defineCollection({
   }),
 });
 
-// 栏目：项目
+// 栏目：项目。不填 project 的是项目首页（网址 /projects/<项目名>/）；
+// 填了 project 的是该项目下的一页，出现在项目的目录侧栏里。只有一层，页面下不能再挂页面
 const projects = defineCollection({
   loader: bundles('./src/content/projects'),
-  schema: entry,
+  schema: entry.extend({
+    project: optional(z.string()), // 所属项目首页的文件夹名，如 robotics-lab
+  }),
 });
 
 // 栏目：技术理论。每篇可归入一个话题（topics 集合），并可在话题内归入一个系列

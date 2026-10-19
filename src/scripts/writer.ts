@@ -12,6 +12,7 @@ import { REPO } from '../consts';
 interface WriteData {
   columns: { id: string; label: string; path: string }[];
   topics: { id: string; title: string; series: string[] }[];
+  projects: { id: string; title: string }[];
   taken: Record<string, string[]>;
 }
 
@@ -21,6 +22,7 @@ const field = <T extends Element>(name: string) => form.elements.namedItem(name)
 const columnSel = field<HTMLSelectElement>('column');
 const topicSel = field<HTMLSelectElement>('topic');
 const seriesSel = field<HTMLSelectElement>('series');
+const projectSel = field<HTMLSelectElement>('project');
 const titleInput = field<HTMLInputElement>('title');
 const slugInput = field<HTMLInputElement>('slug');
 const tagsInput = field<HTMLInputElement>('tags');
@@ -47,10 +49,11 @@ if (!getToken()) {
   form.removeAttribute('hidden');
 }
 
-// ---------- 栏目、话题、系列联动 ----------
+// ---------- 栏目、话题、系列、项目联动 ----------
 
 for (const c of data.columns) columnSel.add(new Option(c.label, c.id));
 for (const t of data.topics) topicSel.add(new Option(t.title, t.id));
+for (const p of data.projects) projectSel.add(new Option(p.title, p.id));
 
 /** 系列选项只列当前话题下的系列 */
 function fillSeries(selected = '') {
@@ -64,6 +67,7 @@ function fillSeries(selected = '') {
 function onColumnChange() {
   const isTheory = columnSel.value === 'theory';
   for (const el of form.querySelectorAll('[data-theory-only]')) el.toggleAttribute('hidden', !isTheory);
+  for (const el of form.querySelectorAll('[data-projects-only]')) el.toggleAttribute('hidden', columnSel.value !== 'projects');
   const column = data.columns.find((c) => c.id === columnSel.value)!;
   form.querySelector('[data-slug-prefix]')!.textContent = column.path;
   if (!slugEdited) slugInput.value = defaultSlug();
@@ -73,6 +77,7 @@ columnSel.addEventListener('change', () => {
   onColumnChange();
   saveDraft();
 });
+projectSel.addEventListener('change', saveDraft);
 topicSel.addEventListener('change', () => {
   fillSeries();
   saveDraft();
@@ -108,7 +113,7 @@ function checkSlug(): string | null {
 // ---------- 自动存稿（文字存 localStorage，图片存 IndexedDB） ----------
 
 const DRAFT_KEY = 'write-draft';
-const textFields = { column: columnSel, topic: topicSel, series: seriesSel, title: titleInput, slug: slugInput, tags: tagsInput, description: descInput, body };
+const textFields = { column: columnSel, topic: topicSel, series: seriesSel, project: projectSel, title: titleInput, slug: slugInput, tags: tagsInput, description: descInput, body };
 
 function saveDraft() {
   const values: Record<string, string | boolean> = { draft: draftBox.checked, slugEdited };
@@ -178,6 +183,7 @@ async function restore() {
     columnSel.value = saved.column as string;
     topicSel.value = saved.topic as string;
     fillSeries(saved.series as string);
+    projectSel.value = data.projects.some((p) => p.id === saved.project) ? (saved.project as string) : '';
     for (const k of ['title', 'slug', 'tags', 'description', 'body'] as const) textFields[k].value = (saved[k] as string) ?? '';
     draftBox.checked = !!saved.draft;
     slugEdited = !!saved.slugEdited;
@@ -188,6 +194,7 @@ async function restore() {
     if (data.columns.some((c) => c.id === column)) columnSel.value = column!;
     topicSel.value = data.topics.some((t) => t.id === params.get('topic')) ? params.get('topic')! : '';
     fillSeries(params.get('series') ?? '');
+    projectSel.value = data.projects.some((p) => p.id === params.get('project')) ? params.get('project')! : '';
   }
   onColumnChange();
   autoGrow();
@@ -439,6 +446,7 @@ function buildMarkdown() {
     lines.push(`topic: ${topicSel.value}`);
     if (seriesSel.value) lines.push(`series: ${JSON.stringify(seriesSel.value)}`);
   }
+  if (columnSel.value === 'projects' && projectSel.value) lines.push(`project: ${projectSel.value}`);
   if (draftBox.checked) lines.push('draft: true');
   return `---\n${lines.join('\n')}\n---\n\n${body.value.trim()}\n`;
 }
@@ -500,12 +508,13 @@ form.addEventListener('submit', async (e) => {
     await clearDraft();
     const url = `${column.path}${slug}/`;
     const wasDraft = draftBox.checked;
-    // 清空表单，但保留栏目、话题、系列，方便接着写下一篇
-    const place = { column: columnSel.value, topic: topicSel.value, series: seriesSel.value };
+    // 清空表单，但保留栏目、话题、系列、项目，方便接着写下一篇
+    const place = { column: columnSel.value, topic: topicSel.value, series: seriesSel.value, project: projectSel.value };
     form.reset();
     columnSel.value = place.column;
     topicSel.value = place.topic;
     fillSeries(place.series);
+    projectSel.value = place.project;
     slugEdited = false;
     onColumnChange();
     autoGrow();

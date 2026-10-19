@@ -1,30 +1,33 @@
 ---
-// 系列目录侧栏：只在属于某个系列的技术理论文章里出现，列出该系列的全部文章。
+// 目录侧栏：技术理论的系列文章、项目的各页共用，列出同一系列（或同一项目）的全部页面。
 //
 // 宽屏：贴在窗口左边缘，平时只露出一个「目录」把手；鼠标移到把手上展开，移开收起，
 //       盖在正文上方，随页面滚动保持不动。点击把手可固定展开，再点一次、按 Esc 或点别处收起。
 // 手机：放在页面顶部，作为普通的折叠目录，点「目录」展开。
 import WriteLink from './WriteLink.astro';
-import { entryUrl, type Series } from '../utils';
+import { entryUrl, type Entry } from '../utils';
 
 interface Props {
-  series: Series;
-  /** 系列所属话题的 id，用于「续写这个系列」链接 */
-  topic: string;
+  /** 目录顶部的名称：系列名或项目名 */
+  name: string;
+  /** 按阅读顺序排好的页面 */
+  entries: Entry[];
+  /** 目录底部「续写」链接（只对登录过后台的浏览器显示） */
+  continueHref: string;
+  continueLabel: string;
 }
 
-const { series, topic } = Astro.props;
-const continueHref = `/write/?${new URLSearchParams({ column: 'theory', topic, series: series.name })}`;
+const { name, entries, continueHref, continueLabel } = Astro.props;
 const path = Astro.url.pathname;
 ---
 
 <aside class="toc" data-toc>
   <button class="handle" type="button" aria-expanded="false" aria-controls="toc-panel">目录</button>
-  <nav id="toc-panel" class="panel" aria-label={`系列「${series.name}」目录`}>
-    <p class="name">{series.name}</p>
+  <nav id="toc-panel" class="panel" aria-label={`「${name}」目录`}>
+    <p class="name">{name}</p>
     <ol>
       {
-        series.entries.map((e) => (
+        entries.map((e) => (
           <li>
             <a href={entryUrl(e)} aria-current={path === entryUrl(e) ? 'page' : undefined}>
               {e.data.title}
@@ -33,7 +36,7 @@ const path = Astro.url.pathname;
         ))
       }
     </ol>
-    <p class="continue"><WriteLink href={continueHref} label="＋ 续写这个系列" /></p>
+    <p class="continue"><WriteLink href={continueHref} label={continueLabel} /></p>
   </nav>
 </aside>
 

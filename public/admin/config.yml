@@ -74,6 +74,16 @@ collections:
     summary: '{{title}}（{{date}}）'
     fields:
       - { name: title, label: 标题, widget: string }
+      # 留空即项目首页；选了项目即该项目下的一页。选项列出全部项目内容，请选项目首页，选错由构建报错
+      - name: project
+        label: 所属项目
+        widget: relation
+        collection: projects
+        value_field: '{{slug}}'
+        search_fields: [title]
+        display_fields: [title]
+        required: false
+        hint: 新项目留空（这一篇就是项目首页）；给已有项目加一页时选该项目
       - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
       - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
       - { name: tags, label: 标签, widget: list, required: false, default: [] }

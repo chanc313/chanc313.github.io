@@ -68,7 +68,15 @@ const Content = entry ? (await render(entry)).Content : null;
       next={next}
       columnOverride={topic && { id: 'theory', label: topic.data.title, href: `/theory/${topic.id}/` }}
     >
-      {series && <SeriesNav slot="aside" series={series} topic={topic!.id} />}
+      {series && (
+        <SeriesNav
+          slot="aside"
+          name={series.name}
+          entries={series.entries}
+          continueHref={`/write/?${new URLSearchParams({ column: 'theory', topic: topic!.id, series: series.name })}`}
+          continueLabel="＋ 续写这个系列"
+        />
+      )}
       {topic && (
         <Fragment slot="meta">
           <a href={`/theory/${topic.id}/`}>{topic.data.title}</a>
