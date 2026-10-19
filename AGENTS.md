@@ -63,9 +63,9 @@
 项目栏目只有两级（博客主人 2026-10-19 选定，不再分系列）：`projects` 的 `project` 字段为空即项目首页，填项目首页的 id 即该项目下的一页。
 
 - `getProjectTree()`（`src/utils.ts`）整理出每个项目的首页与子页面（按日期从早到晚），校验 `project` 指向存在的首页、且不指向子页面（只有一层）。检查用含草稿的全部内容；首页是草稿时子页面由 `getEntries()` 一并过滤，不出现在首页、标签、RSS。
-- `src/pages/projects/[...slug].astro`：网址全部 `/projects/<id>/`，同一集合内 id 天然不重名。目录 = 首页 + 子页面，有子页面时带 `SeriesNav` 并按目录顺序翻页；`columnOverride` 把「项目」换成项目名，首页上链接 `/projects/`，子页面上链接项目首页。
+- `src/pages/projects/[...slug].astro`：网址全部 `/projects/<id>/`，同一集合内 id 天然不重名。目录 = 首页 + 子页面，所有项目页都带 `SeriesNav`（`pinned`，并传入当前页 `headings` 列出二、三级标题），有子页面时按目录顺序翻页；`columnOverride` 把「项目」换成项目名，首页上链接 `/projects/`，子页面上链接项目首页。
 - `/projects/` 只列首页（`ColumnLayout` 的 `items`），有子页面的标「共 N 页」。
-- `SeriesNav` 是通用目录侧栏（`name`、`entries`、`continueHref`、`continueLabel`），技术理论系列与项目共用。
+- `SeriesNav` 是通用目录侧栏（`name`、`entries`、`continueHref`、`continueLabel`，可选 `pinned`、`headings`），技术理论系列与项目共用。`pinned` 在 ≥ 75rem 时常驻展开、隐藏把手：16rem 侧栏 ×2 + 43rem 正文容器，正文保持居中、不被遮挡（博客主人 2026-10-19 要左侧常驻、右侧留空）；更窄时退回悬停展开。技术理论系列仍是悬停展开。
 - 写作页「项目」选择框只列首页（构建时不列草稿项目），网址参数 `project`；`buildMarkdown()` 写 `project:`。
 
 ### 结构检查

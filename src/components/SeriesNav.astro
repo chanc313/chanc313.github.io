@@ -4,6 +4,8 @@
 // 宽屏：贴在窗口左边缘，平时只露出一个「目录」把手；鼠标移到把手上展开，移开收起，
 //       盖在正文上方，随页面滚动保持不动。点击把手可固定展开，再点一次、按 Esc 或点别处收起。
 // 手机：放在页面顶部，作为普通的折叠目录，点「目录」展开。
+// pinned（项目页用）：窗口够宽、侧栏不会盖住正文时（≥ 75rem）常驻展开，不需要把手。
+import type { MarkdownHeading } from 'astro';
 import WriteLink from './WriteLink.astro';
 import { entryUrl, type Entry } from '../utils';
 
@@ -15,13 +17,18 @@ interface Props {
   /** 目录底部「续写」链接（只对登录过后台的浏览器显示） */
   continueHref: string;
   continueLabel: string;
+  /** 宽屏常驻展开 */
+  pinned?: boolean;
+  /** 当前页的小标题，列在目录里当前页下面（只取二、三级标题） */
+  headings?: MarkdownHeading[];
 }
 
-const { name, entries, continueHref, continueLabel } = Astro.props;
+const { name, entries, continueHref, continueLabel, pinned = false, headings = [] } = Astro.props;
+const outline = headings.filter((h) => h.depth <= 3 && h.text.trim());
 const path = Astro.url.pathname;
 ---
 
-<aside class="toc" data-toc>
+<aside class:list={['toc', { pinned }]} data-toc>
   <button class="handle" type="button" aria-expanded="false" aria-controls="toc-panel">目录</button>
   <nav id="toc-panel" class="panel" aria-label={`「${name}」目录`}>
     <p class="name">{name}</p>
@@ -32,6 +39,15 @@ const path = Astro.url.pathname;
             <a href={entryUrl(e)} aria-current={path === entryUrl(e) ? 'page' : undefined}>
               {e.data.title}
             </a>
+            {path === entryUrl(e) && outline.length > 0 && (
+              <ul class="outline">
+                {outline.map((h) => (
+                  <li class={`h${h.depth}`}>
+                    <a href={`#${h.slug}`}>{h.text}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))
       }
@@ -100,6 +116,27 @@ const path = Astro.url.pathname;
     font-weight: 600;
   }
 
+  /* 当前页的小标题：比页面标题小一号、颜色浅，三级标题再缩进一层 */
+  .outline {
+    margin: 0 0 0.5rem;
+    padding-left: 0.75rem;
+    list-style: none;
+    border-left: 1px solid var(--color-rule);
+  }
+
+  .panel .outline a {
+    padding: 0.2rem 0;
+    color: var(--color-muted);
+  }
+
+  .panel .outline a:hover {
+    color: var(--color-accent);
+  }
+
+  .outline .h3 {
+    padding-left: 0.9rem;
+  }
+
   .continue {
     margin: 1rem 0 0;
   }
@@ -161,6 +198,20 @@ const path = Astro.url.pathname;
       letter-spacing: 0.2em;
       border-left: none;
       border-radius: 0 var(--radius) var(--radius) 0;
+    }
+  }
+
+  /* 常驻：16rem 宽的侧栏 + 居中的正文容器（40rem 正文 + 两侧 1.5rem 间距）不重叠，
+     需要窗口 ≥ 16 × 2 + 43 = 75rem */
+  @media (min-width: 75rem) {
+    .toc.pinned {
+      width: 16rem;
+      transform: none;
+      transition: none;
+    }
+
+    .pinned .handle {
+      display: none;
     }
   }
 

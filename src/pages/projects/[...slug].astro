@@ -1,7 +1,8 @@
 ---
 // "项目"栏目的内容页，网址都是 /projects/<页面名>/：
-//   项目首页   不填 project 的内容，有子页面时带目录侧栏
-//   项目下的页 填了 project 的内容，带目录侧栏，底部按目录顺序翻页
+//   项目首页   不填 project 的内容
+//   项目下的页 填了 project 的内容，底部按目录顺序翻页
+// 都带目录侧栏：列出本项目各页，当前页下列出它的小标题；宽屏时常驻在左侧（博客主人 2026-10-19）
 // 目录顺序：项目首页在前，其余按发布日期从早到晚。
 import { render } from 'astro:content';
 import EntryLayout from '../../layouts/EntryLayout.astro';
@@ -27,24 +28,22 @@ interface Props {
 }
 
 const { entry, home, toc, prev, next } = Astro.props;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
 const isHome = entry === home;
 // 页头的「项目」显示为项目名：在项目首页点它回到 /projects/，在项目下的页面点它回到项目首页
 const columnOverride = { id: 'projects', label: home.data.title, href: isHome ? '/projects/' : entryUrl(home) };
 ---
 
 <EntryLayout entry={entry} prev={prev} next={next} columnOverride={columnOverride}>
-  {
-    toc.length > 1 && (
-      <SeriesNav
-        slot="aside"
-        name={home.data.title}
-        entries={toc}
-        continueHref={`/write/?${new URLSearchParams({ column: 'projects', project: home.id })}`}
-        continueLabel="＋ 给这个项目加一页"
-      />
-    )
-  }
+  <SeriesNav
+    slot="aside"
+    name={home.data.title}
+    entries={toc}
+    headings={headings}
+    pinned
+    continueHref={`/write/?${new URLSearchParams({ column: 'projects', project: home.id })}`}
+    continueLabel="＋ 给这个项目加一页"
+  />
   {!isHome && <a slot="meta" href={entryUrl(home)}>{home.data.title}</a>}
   <Content />
 </EntryLayout>
