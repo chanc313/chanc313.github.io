@@ -44,7 +44,7 @@
 4. 新建 `src/pages/notes/index.astro` 与 `src/pages/notes/[...slug].astro`（复制 `posts/` 的，改集合名）
 5. `public/admin/config.yml`：加 `folder: src/content/notes` 的集合，字段与第 2 步一致
 
-导航、首页、标签、RSS、资源发布都从 `src/columns.ts` 读取，无需另改。不要让某个栏目独占首页或站点根级网址。栏目数量由博客主人控制（2026-10-18：文章、项目、技术理论），细分主题用标签；不要为新主题主动提议开栏目。栏目特有的元信息与正文前内容，通过 `EntryLayout` 的 `meta`、`intro`、`aside` 插槽和 `bodyClass` 在该栏目的 `[...slug].astro` 中补充。只有技术理论的系列文章底部有「上一篇 / 下一篇」（`EntryLayout` 的 `prev`、`next`）；其他文章不按日期翻页（博客主人 2026-10-18）。
+导航、首页、标签、RSS、资源发布都从 `src/columns.ts` 读取，无需另改。不要让某个栏目独占首页或站点根级网址。栏目数量由博客主人控制（2026-10-18：文章、项目、技术理论），细分主题用标签；不要为新主题主动提议开栏目。栏目特有的元信息与正文前内容，通过 `EntryLayout` 的 `meta`、`intro`、`aside` 插槽和 `bodyClass` 在该栏目的 `[...slug].astro` 中补充。只有技术理论的系列文章和有子页面的项目底部有「上一篇 / 下一篇」（`EntryLayout` 的 `prev`、`next`），按目录顺序；其他文章不按日期翻页（博客主人 2026-10-18）。
 
 ### 技术理论的话题
 
@@ -57,6 +57,16 @@
 - 侧栏 `src/components/SeriesNav.astro`：宽屏 `position: fixed`，悬停、键盘聚焦或点击把手（`data-open`）时展开；手机（< 48rem）为页面顶部的折叠目录。
 - 话题资源包发布到 `/theory/<id>/`（`astro.config.mjs` 的 `pageBundles`）。
 - 话题与标签可以同名，是博客主人的决定，不要提议合并。
+
+### 项目的多页
+
+项目栏目只有两级（博客主人 2026-10-19 选定，不再分系列）：`projects` 的 `project` 字段为空即项目首页，填项目首页的 id 即该项目下的一页。
+
+- `getProjectTree()`（`src/utils.ts`）整理出每个项目的首页与子页面（按日期从早到晚），校验 `project` 指向存在的首页、且不指向子页面（只有一层）。检查用含草稿的全部内容；首页是草稿时子页面由 `getEntries()` 一并过滤，不出现在首页、标签、RSS。
+- `src/pages/projects/[...slug].astro`：网址全部 `/projects/<id>/`，同一集合内 id 天然不重名。目录 = 首页 + 子页面，所有项目页都带 `SeriesNav`（`pinned`，并传入当前页 `headings` 列出二、三级标题），有子页面时按目录顺序翻页；`columnOverride` 把「项目」换成项目名，首页上链接 `/projects/`，子页面上链接项目首页。
+- `/projects/` 只列首页（`ColumnLayout` 的 `items`），有子页面的标「共 N 页」。
+- `SeriesNav` 是通用目录侧栏（`name`、`entries`、`continueHref`、`continueLabel`，可选 `pinned`、`headings`），技术理论系列与项目共用。`pinned` 配合 `EntryLayout` / `BaseLayout` 的 `wide`：≥ 68rem 时整页容器（页头、正文、页脚）加宽到 `--measure-wide`，`EntryLayout` 排成「15rem 侧栏 + 3rem 间距 + 正文」两列，侧栏 `sticky` 常驻、隐藏把手；更窄时退回悬停展开。博客主人 2026-10-19 先要左侧常驻，后嫌两侧留白太大，故不用贴窗口边缘的固定侧栏。68rem 断点写在 `global.css`、`EntryLayout`、`SeriesNav` 三处，改时一起改。技术理论系列仍是悬停展开。
+- 写作页「项目」选择框只列首页（构建时不列草稿项目），网址参数 `project`；`buildMarkdown()` 写 `project:`。
 
 ### 结构检查
 
@@ -88,6 +98,7 @@
 | `note` | 字符串 | posts | 批注，显示于正文前 |
 | `topic` | 字符串 | theory | 话题 id；不存在时构建报错 |
 | `series` | 字符串 | theory | 系列名，须在该话题的 `series` 列表中 |
+| `project` | 字符串 | projects | 所属项目首页的 id；空即项目首页；不存在或指向子页面时构建报错 |
 
 话题（`topics`）字段：`title`、`description`、`order`（数字，小的在前）、`series`（`{ name }` 数组，也接受字符串数组）。写成对象是为了让后台文章的「系列」能用 relation 字段 `value_field: series.*.name` 做成选择框（Sveltia 的通配只说明支持列表子字段）；该选择框列出所有话题的系列，不能按所选话题过滤，选错由构建校验报错。
 
@@ -104,7 +115,7 @@
 | `![说明](./photo.jpg)` | Astro 图片管线：压缩、转 WebP，输出到 `/_astro/`，原图不复制 |
 | 其他相对引用（`<audio>`、`<video>`、HTML `<img>`、链接到文件） | `src/integrations/page-bundles.mjs` 构建后复制到页面网址下；开发服务器直接提供，支持 Range 请求 |
 
-- 资源包内的 `.md` 与 `.` 开头的文件不发布；`draft: true` 页面的资源不发布。
+- 资源包内的 `.md` 与 `.` 开头的文件不发布；没有生成页面的资源包（`draft: true`、所属项目首页是草稿）资源不发布：`page-bundles.mjs` 以 `dist/` 里是否有该页的 `index.html` 为准。
 - 相对引用依赖 `trailingSlash: 'always'`。
 - 后台写入的引用不带 `./`（如 `photo.jpg`），与 `./photo.jpg` 等效。
 - 文件夹名只用 ASCII（英文、拼音、连字符）。
@@ -136,7 +147,7 @@ GitHub 登录经 Sveltia CMS Authenticator（Cloudflare Worker）完成 OAuth �
 `/write/`（`src/pages/write.astro` + `src/scripts/writer.ts`）供博客主人在前台新建文章，不经过后台。只做新建；修改、删除与话题管理留在后台。
 
 - 登录：读取后台保存的令牌（`src/scripts/login.ts` 的 `getToken()`），不自己做登录。令牌 401 时提示去 `/admin/` 重新登录，表单内容保留。
-- 入口：`src/components/WriteLink.astro`，有令牌才显示。栏目目录页（`ColumnLayout`）、`/theory/`、话题页放「+」，`SeriesNav` 放「续写这个系列」。网址参数 `column`、`topic`、`series` 预选表单。
+- 入口：`src/components/WriteLink.astro`，有令牌才显示。栏目目录页（`ColumnLayout`）、`/theory/`、话题页放「+」，`SeriesNav` 放「续写这个系列」/「给这个项目加一页」。网址参数 `column`、`topic`、`series`、`project` 预选表单。
 - 构建时数据：栏目、话题与系列、各栏目已占用的页面名（含草稿；`theory` 还含话题名），以 JSON 嵌入页面。发布前再用 `GET /contents/...` 确认目录不存在。
 - 发布：GitHub Git Data API（blobs → trees → commits → 更新 `refs/heads/main`，ref 冲突时重试），文章与图片一次提交，路径 `src/content/<栏目>/<页面名>/`。仓库名在 `src/consts.ts` 的 `REPO`。frontmatter 字符串用 `JSON.stringify` 写（合法 YAML）。
 - 草稿：文字存 localStorage（`write-draft`），图片存 IndexedDB（库 `write-draft`）。发布或「清空」后删除。只提交正文仍引用的图片。

@@ -15,7 +15,7 @@
 // 三个时机：
 //   1. 启动时（开发与构建）：检查内容目录，散落在资源包外的 .md 文件直接报错，避免被静默忽略。
 //   2. 开发时：拦截对 /<网址>/<文件> 的请求，直接返回资源包里的文件。
-//   3. 构建完成后：把资源复制进 dist/。draft: true 的页面不复制，避免草稿素材被公开。
+//   3. 构建完成后：把资源复制进 dist/。没有生成页面的（草稿等）不复制，避免草稿素材被公开。
 
 import { readdirSync, readFileSync, statSync, existsSync, mkdirSync, copyFileSync, createReadStream } from 'node:fs';
 import { join, dirname, extname, relative, sep } from 'node:path';
@@ -64,7 +64,8 @@ export default function pageBundles({ bundles }) {
         let count = 0;
         for (const { dir, url } of bundles) {
           for (const bundle of listBundles(join(root, dir))) {
-            if (isDraft(bundle.index)) continue;
+            // 没有生成页面的资源包不复制：草稿，或所属项目首页是草稿，避免素材被公开
+            if (!existsSync(join(out, url, bundle.name, 'index.html'))) continue;
             const imageOnly = imageOnlyRefs(bundle.index);
             for (const file of listResources(bundle.path)) {
               // 只以 ![](./x) 形式引用的图片已由 Astro 压缩输出，原图不再复制
@@ -105,12 +106,6 @@ function listResources(dir) {
     else if (!/\.mdx?$/.test(d.name)) files.push(path);
   }
   return files;
-}
-
-/** 读取 frontmatter 判断是否为草稿 */
-function isDraft(indexFile) {
-  const match = readFileSync(indexFile, 'utf-8').match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  return match ? /^draft:\s*true\s*$/m.test(match[1]) : false;
 }
 
 /**

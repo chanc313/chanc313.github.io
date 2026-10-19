@@ -79,6 +79,14 @@ img {
   padding-inline: var(--space);
 }
 
+/* 宽版面（BaseLayout 的 wide，项目页用）：窗口够宽时页头、正文、页脚一起加宽，容纳常驻侧栏。
+   68rem ≈ --measure-wide + 两侧间距；媒体查询里不能用变量，改宽度时一起改 */
+@media (min-width: 68rem) {
+  [data-wide] .container {
+    max-width: calc(var(--measure-wide) + 2 * var(--space));
+  }
+}
+
 /* ---------- 文章正文排版（Markdown 渲染出来的内容） ---------- */
 .prose {
   overflow-wrap: break-word;

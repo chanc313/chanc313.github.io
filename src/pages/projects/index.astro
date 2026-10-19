@@ -1,10 +1,16 @@
 ---
-// "项目"栏目首页：/projects/
+// "项目"栏目首页：/projects/。只列项目首页，项目下的各页在项目的目录侧栏里
 import ColumnLayout from '../../layouts/ColumnLayout.astro';
 import { getColumn } from '../../columns';
-import { getEntries } from '../../utils';
+import { entryUrl, getProjectTree, type IndexItem } from '../../utils';
 
-const entries = await getEntries('projects');
+const items: IndexItem[] = (await getProjectTree()).map(({ home, pages }) => ({
+  title: home.data.title,
+  url: entryUrl(home),
+  date: home.data.date,
+  label: pages.length > 0 ? `共 ${pages.length + 1} 页` : undefined,
+  draft: home.data.draft,
+}));
 ---
 
-<ColumnLayout column={getColumn('projects')} entries={entries} />
+<ColumnLayout column={getColumn('projects')} items={items} />

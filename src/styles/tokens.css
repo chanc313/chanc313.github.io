@@ -31,6 +31,7 @@
 
   /* 版面 */
   --measure: 40rem;         /* 正文最大宽度，中文约每行 38 字 */
+  --measure-wide: 64rem;    /* 带常驻侧栏的页面（项目页）：侧栏 15rem + 间距 3rem + 正文 46rem（约每行 44 字） */
   --gutter: 7rem;           /* 首页左侧年份栏宽度 */
   --space: 1.5rem;          /* 基础间距 */
   --radius: 4px;

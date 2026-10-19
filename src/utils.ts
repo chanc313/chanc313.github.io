@@ -1,4 +1,4 @@
-// 公共工具函数：读取各栏目内容、生成网址、按年分组、统计标签、技术理论的话题目录、格式化日期
+// 公共工具函数：读取各栏目内容、生成网址、按年分组、统计标签、技术理论的话题目录、项目目录、格式化日期
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { COLUMNS, getColumn, type Column, type ColumnId } from './columns';
 
@@ -10,8 +10,11 @@ const byDateDesc = (a: Entry, b: Entry) => b.data.date.valueOf() - a.data.date.v
 /** 取某个栏目里已发布的内容，从新到旧。草稿只在本地开发时出现。 */
 export async function getEntries<C extends ColumnId>(column: C): Promise<CollectionEntry<C>[]> {
   const entries: CollectionEntry<C>[] = await getCollection(column);
-  return entries
-    .filter((e) => (import.meta.env.PROD ? !e.data.draft : true))
+  const published = entries.filter((e) => (import.meta.env.PROD ? !e.data.draft : true));
+  // 项目下的页面随项目首页发布：首页是草稿时，这些页面也不出现
+  const ids = new Set(published.map((e) => e.id));
+  return published
+    .filter((e) => !('project' in e.data && e.data.project) || ids.has(e.data.project))
     .sort(byDateDesc);
 }
 
@@ -113,6 +116,39 @@ export async function getTheoryTree(): Promise<{ trees: TopicTree[]; loose: Theo
     return { topic, series, singles: mine.filter((e) => !e.data.series), count: mine.length };
   });
   return { trees, loose: entries.filter((e) => !e.data.topic) };
+}
+
+export type ProjectEntry = CollectionEntry<'projects'>;
+
+/** 一个项目：首页与其下各页（按发布日期从早到晚） */
+export interface ProjectTree {
+  home: ProjectEntry;
+  pages: ProjectEntry[];
+}
+
+/**
+ * 项目栏目的结构：每个项目首页一份，从新到旧。
+ * 检查每页填写的 project 是否指向一个项目首页，填错直接报错，避免页面从目录中"消失"。
+ */
+export async function getProjectTree(): Promise<ProjectTree[]> {
+  // 检查用全部内容（含草稿）：项目首页是草稿时，它的各页随之不发布，不算错误
+  const all = await getCollection('projects');
+  const errors: string[] = [];
+  for (const { id, data } of all) {
+    if (!data.project) continue;
+    const parent = all.find((e) => e.id === data.project);
+    if (!parent) errors.push(`src/content/projects/${id}：项目 ${data.project} 不存在`);
+    else if (parent.data.project) errors.push(`src/content/projects/${id}：${data.project} 本身是某个项目下的一页，页面下不能再挂页面`);
+  }
+  if (errors.length > 0) throw new Error(`项目目录检查未通过：\n${errors.map((e) => `  - ${e}`).join('\n')}`);
+
+  const entries = await getEntries('projects');
+  return entries.filter((e) => !e.data.project).map((home) => ({
+    home,
+    pages: entries
+      .filter((e) => e.data.project === home.id)
+      .sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf() || a.id.localeCompare(b.id)),
+  }));
 }
 
 export function formatDate(date: Date, style: 'full' | 'short' = 'full'): string {
