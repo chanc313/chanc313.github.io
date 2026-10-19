@@ -34,7 +34,7 @@ const isHome = entry === home;
 const columnOverride = { id: 'projects', label: home.data.title, href: isHome ? '/projects/' : entryUrl(home) };
 ---
 
-<EntryLayout entry={entry} prev={prev} next={next} columnOverride={columnOverride}>
+<EntryLayout entry={entry} prev={prev} next={next} columnOverride={columnOverride} wide>
   <SeriesNav
     slot="aside"
     name={home.data.title}

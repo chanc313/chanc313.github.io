@@ -17,65 +17,81 @@ interface Props {
   bodyClass?: string;
   /** 见 Header 的 columnOverride */
   columnOverride?: { id: string; label: string; href: string };
+  /** 宽版面：宽屏时侧栏常驻在正文左侧（项目页），见 BaseLayout 的 wide */
+  wide?: boolean;
 }
 
-const { entry, prev, next, bodyClass, columnOverride } = Astro.props;
+const { entry, prev, next, bodyClass, columnOverride, wide = false } = Astro.props;
 const { title, description, date, updated, tags } = entry.data;
 ---
 
-<BaseLayout title={title} description={description} columnOverride={columnOverride}>
-  <slot name="aside" />
-  <article>
-    <header class="entry-header">
-      <h1>{title}</h1>
-      <p class="meta">
-        <time datetime={date.toISOString()}>{formatDate(date)}</time>
-        {updated && <span>更新于 {formatDate(updated)}</span>}
-        <slot name="meta" />
-      </p>
+<BaseLayout title={title} description={description} columnOverride={columnOverride} wide={wide}>
+  <div class:list={['entry', { wide }]}>
+    <slot name="aside" />
+    <div class="entry-main">
+      <article>
+        <header class="entry-header">
+          <h1>{title}</h1>
+          <p class="meta">
+            <time datetime={date.toISOString()}>{formatDate(date)}</time>
+            {updated && <span>更新于 {formatDate(updated)}</span>}
+            <slot name="meta" />
+          </p>
+          {
+            tags.length > 0 && (
+              <ul class="tags" aria-label="标签">
+                {tags.map((tag) => (
+                  <li>
+                    <a href={`/tags/${tag}/`}>#{tag}</a>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </header>
+
+        <slot name="intro" />
+
+        <div class:list={['prose', bodyClass]}>
+          <slot />
+        </div>
+      </article>
+
       {
-        tags.length > 0 && (
-          <ul class="tags" aria-label="标签">
-            {tags.map((tag) => (
-              <li>
-                <a href={`/tags/${tag}/`}>#{tag}</a>
-              </li>
-            ))}
-          </ul>
+        (prev || next) && (
+          <nav class="pager" aria-label="上一篇和下一篇">
+            {prev ? (
+              <a href={entryUrl(prev)}>
+                <span>上一篇</span>
+                {prev.data.title}
+              </a>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <a href={entryUrl(next)} class="next">
+                <span>下一篇</span>
+                {next.data.title}
+              </a>
+            )}
+          </nav>
         )
       }
-    </header>
-
-    <slot name="intro" />
-
-    <div class:list={['prose', bodyClass]}>
-      <slot />
     </div>
-  </article>
-
-  {
-    (prev || next) && (
-      <nav class="pager" aria-label="上一篇和下一篇">
-        {prev ? (
-          <a href={entryUrl(prev)}>
-            <span>上一篇</span>
-            {prev.data.title}
-          </a>
-        ) : (
-          <span />
-        )}
-        {next && (
-          <a href={entryUrl(next)} class="next">
-            <span>下一篇</span>
-            {next.data.title}
-          </a>
-        )}
-      </nav>
-    )
-  }
+  </div>
 </BaseLayout>
 
 <style>
+  /* 宽版面：侧栏一列、正文一列（列宽见 tokens.css 的 --measure-wide） */
+  @media (min-width: 68rem) {
+    .entry.wide {
+      display: grid;
+      grid-template-columns: 15rem minmax(0, 1fr);
+      column-gap: 3rem;
+      align-items: start;
+    }
+  }
+
   .entry-header {
     margin-bottom: 2.5rem;
   }
