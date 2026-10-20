@@ -5,6 +5,10 @@
 //   ├── index.md        正文
 //   ├── cover.jpg       私有资源
 //   └── bgm.mp3
+// 栏目里的目录也是资源包，它的子文件夹里有 index.md 的是下一层页面，不算它的资源：
+//   src/content/theory/ros/            /theory/ros/
+//   ├── index.md
+//   └── notes/                         /theory/ros/notes/（另一个资源包）
 //
 // 资源的处理方式：
 //   - Markdown 图片语法 ![](./cover.jpg)：由 Astro 原生处理（压缩、转 WebP），不经过本集成。
@@ -64,7 +68,7 @@ export default function pageBundles({ bundles }) {
         let count = 0;
         for (const { dir, url } of bundles) {
           for (const bundle of listBundles(join(root, dir))) {
-            // 没有生成页面的资源包不复制：草稿，或所属项目首页是草稿，避免素材被公开
+            // 没有生成页面的资源包不复制：草稿，或所在目录是草稿，避免素材被公开
             if (!existsSync(join(out, url, bundle.name, 'index.html'))) continue;
             const imageOnly = imageOnlyRefs(bundle.index);
             for (const file of listResources(bundle.path)) {
@@ -83,27 +87,34 @@ export default function pageBundles({ bundles }) {
   };
 }
 
-/** 列出内容目录下的所有资源包（含 index.md 或 index.mdx 的子文件夹） */
-function listBundles(contentDir) {
+/** 文件夹里的 index.md 或 index.mdx；没有时返回 undefined */
+const indexFile = (dir) => ['index.md', 'index.mdx'].map((f) => join(dir, f)).find(existsSync);
+
+/**
+ * 列出内容目录下的所有资源包（含 index.md 或 index.mdx 的文件夹，各层都算）。
+ * name 是相对内容目录的路径，如 ros/notes，与页面网址对应
+ */
+function listBundles(contentDir, prefix = '') {
   if (!existsSync(contentDir)) return [];
   return readdirSync(contentDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => {
+    .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
+    .flatMap((d) => {
       const path = join(contentDir, d.name);
-      const index = ['index.md', 'index.mdx'].map((f) => join(path, f)).find(existsSync);
-      return index ? { name: d.name, path, index } : null;
-    })
-    .filter(Boolean);
+      const name = prefix + d.name;
+      const index = indexFile(path);
+      return [...(index ? [{ name, path, index }] : []), ...listBundles(path, `${name}/`)];
+    });
 }
 
-/** 列出资源包里除 Markdown 以外的所有文件（含子文件夹），跳过隐藏文件 */
+/** 列出资源包里除 Markdown 以外的所有文件（含子文件夹），跳过隐藏文件和下一层页面的文件夹 */
 function listResources(dir) {
   const files = [];
   for (const d of readdirSync(dir, { withFileTypes: true })) {
     if (d.name.startsWith('.')) continue;
     const path = join(dir, d.name);
-    if (d.isDirectory()) files.push(...listResources(path));
-    else if (!/\.mdx?$/.test(d.name)) files.push(path);
+    if (d.isDirectory()) {
+      if (!indexFile(path)) files.push(...listResources(path));
+    } else if (!/\.mdx?$/.test(d.name)) files.push(path);
   }
   return files;
 }
@@ -140,16 +151,19 @@ function checkLooseMarkdown(contentDir) {
   }
 }
 
-/** 开发时：把请求网址对应到资源包里的文件；对应不上返回 null */
+/**
+ * 开发时：把请求网址对应到资源包里的文件；对应不上返回 null。
+ * 网址与文件位置一一对应（/theory/ros/notes/a.png → src/content/theory/ros/notes/a.png），与构建后相同
+ */
 function resolveRequest(root, bundles, pathname) {
   for (const { dir, url } of bundles) {
     if (!pathname.startsWith(url)) continue;
     const rest = pathname.slice(url.length).split('/');
-    if (rest.length < 2 || !rest[1]) continue; // 至少要有 <页面名>/<文件>
-    const bundleDir = join(root, dir, rest[0]);
-    const file = join(bundleDir, ...rest.slice(1));
-    // 防止 ../ 跳出资源包；不提供 Markdown 源文件
-    if (!file.startsWith(bundleDir + sep) || /\.mdx?$/.test(file)) continue;
+    if (rest.length < 2 || !rest.at(-1)) continue; // 至少要有 <页面名>/<文件>
+    const contentDir = join(root, dir);
+    const file = join(contentDir, ...rest);
+    // 防止 ../ 跳出内容目录；不提供 Markdown 源文件和隐藏文件
+    if (!file.startsWith(contentDir + sep) || /\.mdx?$/.test(file) || rest.some((p) => p.startsWith('.'))) continue;
     if (existsSync(file) && statSync(file).isFile()) return file;
   }
   return null;

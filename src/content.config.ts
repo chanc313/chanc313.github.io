@@ -4,16 +4,23 @@
 // 每个页面是一个"资源包"文件夹：
 //   src/content/<集合>/<页面名>/index.md   正文
 //   src/content/<集合>/<页面名>/...        这个页面私有的图片、音频、视频等
-// 页面名即网址的最后一段。资源文件的发布由 src/integrations/page-bundles.mjs 处理。
+// 资源文件的发布由 src/integrations/page-bundles.mjs 处理。
+//
+// 栏目里的页面分两种（kind 字段）：文章和目录。目录的文件夹里可以再放目录或文章，层数不限，
+// 网址就是文件夹路径：src/content/theory/ros/notes/index.md → /theory/ros/notes/。
+// 文章下面不能再放页面。目录结构的整理和检查在 src/utils.ts 的 getTree()。
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
-/** 读取某个目录下所有资源包的 index.md；条目 id 取文件夹名 */
-function bundles(base: string) {
+/**
+ * 读取某个目录下所有资源包的 index.md；条目 id 取相对路径，如 ros/notes。
+ * nested 为 false 时只读一层（独立页面的网址只有一段）
+ */
+function bundles(base: string, nested = true) {
   return glob({
     base,
-    pattern: '*/index.{md,mdx}',
+    pattern: nested ? '**/index.{md,mdx}' : '*/index.{md,mdx}',
     generateId: ({ entry }) => entry.replace(/\/index\.mdx?$/, ''),
   });
 }
@@ -28,11 +35,15 @@ const optional = <T extends z.ZodTypeAny>(schema: T) =>
 // 栏目内容共用的字段
 const entry = z.object({
   title: z.string(),
+  // 页面类型：article 文章（默认），folder 目录。目录下可以放目录或文章，正文是目录的简介（可空）
+  kind: optional(z.enum(['article', 'folder'])).transform((v) => v ?? 'article'),
   description: optional(z.string()),
   date: z.coerce.date(),
   updated: optional(z.coerce.date()),
   tags: optional(z.array(z.string())).transform((v) => v ?? []),
   draft: optional(z.boolean()).transform((v) => v ?? false),
+  // 目录在上级目录里的排序，数字小的在前；不填按日期。文章按日期排，不用填
+  order: optional(z.number()).transform((v) => v ?? 0),
 });
 
 // 栏目：文章。也可以放对话记录：正文用 @me / @ai 分段（见 src/plugins/remark-chat-turns.mjs），
@@ -45,41 +56,21 @@ const posts = defineCollection({
   }),
 });
 
-// 栏目：项目。不填 project 的是项目首页（网址 /projects/<项目名>/）；
-// 填了 project 的是该项目下的一页，出现在项目的目录侧栏里。只有一层，页面下不能再挂页面
+// 栏目：项目。一个项目是一个目录，项目的各页（开发日志、环境说明等）放在它下面
 const projects = defineCollection({
   loader: bundles('./src/content/projects'),
-  schema: entry.extend({
-    project: optional(z.string()), // 所属项目首页的文件夹名，如 robotics-lab
-  }),
+  schema: entry,
 });
 
-// 栏目：技术理论。每篇可归入一个话题（topics 集合），并可在话题内归入一个系列
+// 栏目：技术理论。话题（ROS、控制理论等）是一级目录，系列、章节是下面的子目录
 const theory = defineCollection({
   loader: bundles('./src/content/theory'),
-  schema: entry.extend({
-    topic: optional(z.string()),  // 话题的文件夹名，如 ros；不填则列在「未归入话题」
-    series: optional(z.string()), // 系列名，必须是该话题 series 列表中的一项
-  }),
-});
-
-// 技术理论的话题（如 ROS、控制理论），网址为 /theory/<话题名>/。
-// series 列出话题内的系列。每项写成 { name: 系列名 }（后台的写法，便于文章从下拉框选择），
-// 也接受直接写字符串
-const topics = defineCollection({
-  loader: bundles('./src/content/topics'),
-  schema: z.object({
-    title: z.string(),
-    description: optional(z.string()),
-    order: optional(z.number()).transform((v) => v ?? 0), // 话题之间的排序，小的在前
-    series: optional(z.array(z.union([z.string(), z.object({ name: z.string() })])))
-      .transform((v) => (v ?? []).map((s) => (typeof s === 'string' ? s : s.name))),
-  }),
+  schema: entry,
 });
 
 // 独立页面（不属于任何栏目，如"关于"），网址为 /<页面名>/
 const pages = defineCollection({
-  loader: bundles('./src/content/pages'),
+  loader: bundles('./src/content/pages', false),
   schema: z.object({
     title: z.string(),
     description: optional(z.string()),
@@ -87,4 +78,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, projects, theory, topics, pages };
+export const collections = { posts, projects, theory, pages };

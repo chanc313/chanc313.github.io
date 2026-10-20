@@ -10,14 +10,14 @@
 //   3. src/content/ 下没有未登记的目录（未登记的目录不会生成任何页面）
 //   4. 独立页面名不与已有网址冲突：如 tags、admin、posts。
 //      冲突时 Astro 只给一条警告并跳过该页面，页面会"消失"。
-//   5. 技术理论的话题名（src/content/topics/）不与技术理论的文章名重名：两者网址都是 /theory/<名字>/
+// 栏目内的目录结构（每层文件夹都有 index.md、文章下面不放页面）在生成页面时由 src/utils.ts 的 getTree() 检查。
 
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** 栏目以外的内容集合：独立页面、技术理论的话题 */
-const EXTRA_COLLECTIONS = ['pages', 'topics'];
+/** 栏目以外的内容集合：独立页面 */
+const EXTRA_COLLECTIONS = ['pages'];
 
 /**
  * @param {{ columns: readonly { id: string }[] }} options  栏目列表，来自 src/columns.ts
@@ -33,7 +33,6 @@ export default function structureCheck({ columns }) {
           ...checkAdminConfig(root, columns),
           ...checkContentDirs(root, columns),
           ...checkPageNames(root),
-          ...checkTopicNames(root),
         ];
         if (errors.length > 0) {
           throw new Error(`网站结构检查未通过：\n${errors.map((e) => `  - ${e}`).join('\n')}`);
@@ -87,14 +86,6 @@ function checkPageNames(root) {
   return subdirs(join(root, 'src/content/pages'))
     .filter((name) => taken.has(name))
     .map((name) => `独立页面 src/content/pages/${name}/ 的网址 /${name}/ 已被占用，请给页面文件夹换个名字`);
-}
-
-/** 5. 话题页 /theory/<话题名>/ 与文章页 /theory/<文章名>/ 共用一层网址 */
-function checkTopicNames(root) {
-  const articles = new Set(subdirs(join(root, 'src/content/theory')));
-  return subdirs(join(root, 'src/content/topics'))
-    .filter((name) => articles.has(name))
-    .map((name) => `话题 src/content/topics/${name}/ 与文章 src/content/theory/${name}/ 同名，网址 /theory/${name}/ 冲突，请给其中一个换名字`);
 }
 
 /** 目录下的子目录名（目录不存在时返回空列表） */

@@ -7,6 +7,8 @@
 //   3. 新建 src/content/notes/ 存放内容
 //   4. 新建 src/pages/notes/index.astro 和 src/pages/notes/[...slug].astro（可复制现有栏目的）
 //   5. public/admin/config.yml 加一个 folder: src/content/notes 的集合（后台编辑用）
+// pinnedNav：目录里的页面在宽屏时把目录侧栏常驻在正文左侧（项目页，博客主人 2026-10-19）；
+// 为 false 时侧栏平时收在窗口左边缘，悬停展开
 // 漏掉 3 以外的任何一处，npm run dev / build 启动时会报错指出（src/integrations/structure-check.mjs）。
 
 export const COLUMNS = [
@@ -15,18 +17,21 @@ export const COLUMNS = [
     label: '文章',
     path: '/posts/',
     description: '文章与随笔',
+    pinnedNav: false,
   },
   {
     id: 'projects',
     label: '项目',
     path: '/projects/',
     description: '做过的项目与记录',
+    pinnedNav: true,
   },
   {
     id: 'theory',
     label: '技术理论',
     path: '/theory/',
     description: '技术背后的原理与理论',
+    pinnedNav: false,
   },
 ] as const;
 

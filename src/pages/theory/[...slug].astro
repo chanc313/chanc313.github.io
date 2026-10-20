@@ -1,105 +1,18 @@
 ---
-// "技术理论"栏目的两类页面，网址都在 /theory/ 下：
-//   话题页 /theory/<话题名>/   来自 src/content/topics/，按年份列出话题内容，一个系列算一项
-//   文章页 /theory/<页面名>/   来自 src/content/theory/，属于系列的文章带系列目录侧栏
-// 两者共用一层网址，同名会冲突，由 src/integrations/structure-check.mjs 在启动时检查。
-import { render } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import EntryLayout from '../../layouts/EntryLayout.astro';
-import EntryIndex from '../../components/EntryIndex.astro';
-import SeriesNav from '../../components/SeriesNav.astro';
-import WriteLink from '../../components/WriteLink.astro';
-import { getTheoryTree, entryUrl, type IndexItem, type Series, type TheoryEntry, type Topic } from '../../utils';
+// "技术理论"栏目的内容页：src/content/theory/ 里的每个页面生成 /theory/<路径>/。
+// 一级目录是话题（ROS、控制理论等），下面可以再分系列、章节；页面怎么显示见 NodeLayout
+import NodeLayout from '../../layouts/NodeLayout.astro';
+import { treePaths, type TreeNode } from '../../utils';
 
 export async function getStaticPaths() {
-  const { trees, loose } = await getTheoryTree();
-
-  // 话题页：单篇文章与系列混排，从新到旧；系列链接到第一篇，日期取最新一篇
-  const topicPages = trees.map(({ topic, series, singles }) => {
-    const items: IndexItem[] = [
-      ...singles.map((e) => ({ title: e.data.title, url: entryUrl(e), date: e.data.date, draft: e.data.draft })),
-      ...series.map((s) => ({
-        title: s.name,
-        url: entryUrl(s.entries[0]),
-        date: s.entries.at(-1)!.data.date,
-        label: `系列 · ${s.entries.length} 篇`,
-      })),
-    ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
-    return { params: { slug: topic.id }, props: { topic, items } };
-  });
-
-  // 系列文章：按系列顺序翻页（上一篇 / 下一篇）
-  const seriesEntries = trees.flatMap(({ topic, series }) =>
-    series.flatMap((s) =>
-      s.entries.map((entry, i) => ({
-        params: { slug: entry.id },
-        props: { topic, series: s, entry, prev: s.entries[i - 1], next: s.entries[i + 1] },
-      })),
-    ),
-  );
-
-  // 单篇文章：不翻页
-  const singleEntries = [
-    ...trees.flatMap(({ topic, singles }) => singles.map((entry) => ({ params: { slug: entry.id }, props: { topic, entry } }))),
-    ...loose.map((entry) => ({ params: { slug: entry.id }, props: { entry } })),
-  ];
-
-  return [...topicPages, ...seriesEntries, ...singleEntries];
+  return treePaths('theory');
 }
 
 interface Props {
-  topic?: Topic;
-  items?: IndexItem[];
-  series?: Series;
-  entry?: TheoryEntry;
-  prev?: TheoryEntry;
-  next?: TheoryEntry;
+  node: TreeNode;
 }
 
-const { topic, items, series, entry, prev, next } = Astro.props;
-const Content = entry ? (await render(entry)).Content : null;
+const { node } = Astro.props;
 ---
 
-{
-  entry && Content ? (
-    <EntryLayout
-      entry={entry}
-      prev={prev}
-      next={next}
-      columnOverride={topic && { id: 'theory', label: topic.data.title, href: `/theory/${topic.id}/` }}
-    >
-      {series && (
-        <SeriesNav
-          slot="aside"
-          name={series.name}
-          entries={series.entries}
-          continueHref={`/write/?${new URLSearchParams({ column: 'theory', topic: topic!.id, series: series.name })}`}
-          continueLabel="＋ 续写这个系列"
-        />
-      )}
-      {topic && (
-        <Fragment slot="meta">
-          <a href={`/theory/${topic.id}/`}>{topic.data.title}</a>
-          {series && <span>系列：{series.name}</span>}
-        </Fragment>
-      )}
-      <Content />
-    </EntryLayout>
-  ) : (
-    <BaseLayout
-      title={topic!.data.title}
-      description={topic!.data.description}
-      columnOverride={{ id: 'theory', label: topic!.data.title, href: '/theory/' }}
-    >
-      <h1 class="visually-hidden">{topic!.data.title}</h1>
-      <WriteLink href={`/write/?column=theory&topic=${topic!.id}`} />
-      {items!.length > 0 ? <EntryIndex items={items} /> : <p class="empty">这个话题还没有内容。</p>}
-    </BaseLayout>
-  )
-}
-
-<style>
-  .empty {
-    color: var(--color-muted);
-  }
-</style>
+<NodeLayout node={node} />

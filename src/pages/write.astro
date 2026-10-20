@@ -1,32 +1,37 @@
 ---
-// 写作页 /write/：博客主人在前台直接写新文章并发布，不用进后台。
+// 写作页 /write/：博客主人在前台直接新建文章或目录并发布，不用进后台。
 //
 // 只对登录过后台的浏览器可用：页面读取后台保存的 GitHub 令牌，用它把文章提交到仓库。
 // 没有仓库写权限的人即使打开本页也无法提交。不被搜索引擎收录，不进站点地图。
-// 网址参数可预先选好栏目、话题、系列、项目：/write/?column=theory&topic=ros&series=学习笔记、/write/?column=projects&project=robotics-lab
-// 交互逻辑在 src/scripts/writer.ts。修改、删除旧文章及管理话题仍在后台进行。
+// 网址参数可预先选好栏目、目录和类型：/write/?column=theory&parent=ros、/write/?column=projects&parent=robotics-lab&kind=folder
+// 交互逻辑在 src/scripts/writer.ts。修改、删除、移动旧页面仍在后台进行。
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import '../styles/math.css';
 import { COLUMNS } from '../columns';
+import { ancestors, getTree, isFolder, type TreeNode } from '../utils';
 
-// 页面需要的数据：栏目、技术理论的话题与系列、项目首页、已占用的网址名（含草稿，避免覆盖已有文章）
-const topics = (await getCollection('topics'))
-  .sort((a, b) => a.data.order - b.data.order || a.id.localeCompare(b.id))
-  .map((t) => ({ id: t.id, title: t.data.title, series: t.data.series }));
-const projects = (await getCollection('projects'))
-  .filter((p) => !p.data.project && !(import.meta.env.PROD && p.data.draft)) // 草稿项目的标题不公开
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .map((p) => ({ id: p.id, title: p.data.title }));
+// 页面需要的数据：栏目、各栏目的目录、已占用的网址（含草稿，避免覆盖已有页面）
+const folders: Record<string, { id: string; label: string }[]> = {};
 const taken: Record<string, string[]> = {};
-for (const c of COLUMNS) taken[c.id] = (await getCollection(c.id)).map((e) => e.id);
-// 技术理论的文章与话题共用 /theory/<名字>/
-taken.theory.push(...topics.map((t) => t.id));
+for (const c of COLUMNS) {
+  // 目录按目录树的顺序列出，显示从一级目录开始的路径，如「ROS / 学习笔记」。
+  // 草稿目录及其下的目录不列出：生产构建的目录树里没有它们，标题也就不会公开
+  const { roots } = await getTree(c.id);
+  const walk = (nodes: TreeNode[]): { id: string; label: string }[] =>
+    nodes
+      .filter((n) => isFolder(n.entry))
+      .flatMap((n) => [
+        { id: n.entry.id, label: [...ancestors(n), n].map((a) => a.entry.data.title).join(' / ') },
+        ...walk(n.children),
+      ]);
+  folders[c.id] = walk(roots);
+  taken[c.id] = (await getCollection(c.id)).map((e) => e.id);
+}
 
 const data = {
   columns: COLUMNS.map((c) => ({ id: c.id, label: c.label, path: c.path })),
-  topics,
-  projects,
+  folders,
   taken,
 };
 ---
@@ -45,19 +50,21 @@ const data = {
         <span>栏目</span>
         <select name="column"></select>
       </label>
-      <label data-theory-only>
-        <span>话题</span>
-        <select name="topic"><option value="">不归入话题</option></select>
+      <label>
+        <span>放在</span>
+        <select name="parent"><option value="">栏目下（不进目录）</option></select>
       </label>
-      <label data-theory-only>
-        <span>系列</span>
-        <select name="series"><option value="">单篇文章</option></select>
-      </label>
-      <label data-projects-only>
-        <span>项目</span>
-        <select name="project"><option value="">新项目（作为项目首页）</option></select>
+      <label>
+        <span>新建</span>
+        <select name="kind">
+          <option value="article">文章</option>
+          <option value="folder">目录</option>
+        </select>
       </label>
     </div>
+    <p class="hint" data-folder-hint hidden>
+      目录里可以再放目录或文章，网址就是目录的路径。正文可不填：不填时目录页列出里面的内容；填了则像项目介绍一样显示正文，内容列在侧栏。
+    </p>
 
     <input class="title" name="title" placeholder="标题" required autocomplete="off" />
 
@@ -162,8 +169,10 @@ const data = {
     color: var(--color-muted);
   }
 
-  label[hidden] {
-    display: none;
+  .hint {
+    margin: -0.25rem 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
   }
 
   .grow {
@@ -213,9 +222,10 @@ const data = {
     min-width: 0;
   }
 
+  /* 目录路径可能很长：窄屏时在斜杠处换行，不撑出横向滚动 */
   .slug-prefix {
     color: var(--color-muted);
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
 
   .slug input {

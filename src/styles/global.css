@@ -85,6 +85,14 @@ img {
   [data-wide] .container {
     max-width: calc(var(--measure-wide) + 2 * var(--space));
   }
+
+  /* 宽版面里：侧栏一列、正文一列（EntryLayout 和 NodeLayout 的目录页共用） */
+  [data-wide] .with-sidebar {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    column-gap: 3rem;
+    align-items: start;
+  }
 }
 
 /* ---------- 文章正文排版（Markdown 渲染出来的内容） ---------- */

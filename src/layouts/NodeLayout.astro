@@ -1,0 +1,117 @@
+---
+// 栏目内容页（文章和目录）共用的布局。各栏目的 [...slug].astro 只负责生成网址和栏目特有的插槽。
+//
+//   文章、有正文的目录（如项目首页）：正文页（EntryLayout）
+//       放在目录里的，带所在一级目录的目录侧栏，日期后列出所在的各级目录；
+//       文章底部在同一目录的文章之间翻页（上一篇 / 下一篇）
+//   没有正文的目录（如话题、系列）：年份目录，一个子目录算一项，与栏目首页相同；也带目录侧栏
+//
+// 页头导航里的栏目名换成所在目录的名称，点击回到上一级（见 Header 的 columnOverride）：
+//   目录页显示自己的名称，链接到上级目录（一级目录链接到栏目首页）；
+//   文章显示上级目录的名称，链接到上级目录；不在目录里的文章不替换
+//
+// 插槽 meta（日期后追加的信息）、intro（标题与正文之间）原样交给 EntryLayout
+import { render } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import EntryLayout from './EntryLayout.astro';
+import EntryIndex from '../components/EntryIndex.astro';
+import FolderNav from '../components/FolderNav.astro';
+import WriteLink from '../components/WriteLink.astro';
+import { ancestors, columnOf, entryUrl, hasBody, indexItems, isFolder, topFolder, type TreeNode } from '../utils';
+
+interface Props {
+  node: TreeNode;
+}
+
+const { node } = Astro.props;
+const { entry, parent } = node;
+const column = columnOf(entry);
+const folder = isFolder(entry);
+const trail = ancestors(node);
+
+const upHref = parent ? entryUrl(parent.entry) : column.path;
+const columnOverride = folder
+  ? { id: column.id, label: entry.data.title, href: upHref }
+  : parent && { id: column.id, label: parent.entry.data.title, href: upHref };
+
+// 文章和有正文的目录渲染正文；没有正文的目录只列内容
+const rendered = !folder || hasBody(entry) ? await render(entry) : null;
+const Content = rendered?.Content;
+const headings = rendered?.headings ?? [];
+const top = topFolder(node);
+// 宽版面：栏目设了侧栏常驻，且页面在目录里（有侧栏）
+const wide = column.pinnedNav && !!top;
+const siblings = !folder && parent ? parent.children.filter((n) => !isFolder(n.entry)) : [];
+const i = siblings.indexOf(node);
+const prev = i > 0 ? siblings[i - 1].entry : undefined;
+const next = i >= 0 ? siblings[i + 1]?.entry : undefined;
+---
+
+{
+  Content ? (
+    <EntryLayout entry={entry} prev={prev} next={next} columnOverride={columnOverride} wide={wide}>
+      {top && <FolderNav slot="aside" root={top} current={node} headings={headings} pinned={column.pinnedNav} />}
+      <Fragment slot="meta">
+        {trail.length > 0 && (
+          <span class="trail">
+            {trail.map((n, k) => (
+              <>
+                {k > 0 && ' / '}
+                <a href={entryUrl(n.entry)}>{n.entry.data.title}</a>
+              </>
+            ))}
+          </span>
+        )}
+        <slot name="meta" />
+      </Fragment>
+      <slot name="intro" slot="intro" />
+      <Content />
+    </EntryLayout>
+  ) : (
+    <BaseLayout title={entry.data.title} description={entry.data.description} columnOverride={columnOverride} wide={wide}>
+      <h1 class="visually-hidden">{entry.data.title}</h1>
+      <div class="with-sidebar">
+        <FolderNav root={top!} current={node} pinned={column.pinnedNav} />
+        <div>
+          {/* 子目录页：页头只显示自己的名称，这里补上从一级目录开始的路径 */}
+          {trail.length > 0 && (
+            <p class="trail path">
+              {trail.map((n) => (
+                <>
+                  <a href={entryUrl(n.entry)}>{n.entry.data.title}</a>
+                  {' / '}
+                </>
+              ))}
+              <span aria-current="page">{entry.data.title}</span>
+            </p>
+          )}
+          <WriteLink href={`/write/?${new URLSearchParams({ column: column.id, parent: entry.id })}`} />
+          {node.children.length > 0 ? <EntryIndex items={indexItems(node.children)} /> : <p class="empty">这个目录还没有内容。</p>}
+        </div>
+      </div>
+    </BaseLayout>
+  )
+}
+
+<style>
+  .trail {
+    color: var(--color-muted);
+  }
+
+  .trail a {
+    color: inherit;
+  }
+
+  .trail a:hover {
+    color: var(--color-accent);
+  }
+
+  .path {
+    margin: 0 0 1.5rem;
+    font-size: var(--text-sm);
+  }
+
+  .empty {
+    color: var(--color-muted);
+  }
+</style>

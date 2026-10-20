@@ -1,0 +1,117 @@
+---
+// 目录侧栏里的一层：先列子目录，再列文章（顺序见 src/utils.ts 的 getTree）。
+// 当前页所在的目录展开，列出下一层（组件调用自己）；其他目录收起，只显示篇数（含各层子目录），点击进入目录页。
+// 当前页的小标题列在当前页下面。
+import type { MarkdownHeading } from 'astro';
+import Outline from './Outline.astro';
+import { ancestors, articlesUnder, entryUrl, isFolder, type TreeNode } from '../utils';
+
+interface Props {
+  /** 这一层的页面 */
+  nodes: TreeNode[];
+  /** 当前页 */
+  current: TreeNode;
+  /** 当前页的小标题 */
+  headings: MarkdownHeading[];
+}
+
+const { nodes, current, headings } = Astro.props;
+const onPath = new Set([current, ...ancestors(current)]);
+const folders = nodes.filter((n) => isFolder(n.entry));
+const articles = nodes.filter((n) => !isFolder(n.entry));
+const ariaCurrent = (n: TreeNode) => (n === current ? 'page' : undefined);
+---
+
+{
+  folders.length > 0 && (
+    <ul class="folders">
+      {folders.map((n) => (
+        <li class:list={{ open: onPath.has(n) }}>
+          <a href={entryUrl(n.entry)} aria-current={ariaCurrent(n)}>
+            {n.entry.data.title}
+            {!onPath.has(n) && articlesUnder(n).length > 0 && <span class="count">{articlesUnder(n).length}</span>}
+          </a>
+          {n === current && <Outline headings={headings} />}
+          {onPath.has(n) && n.children.length > 0 && <Astro.self nodes={n.children} current={current} headings={headings} />}
+        </li>
+      ))}
+    </ul>
+  )
+}
+{
+  articles.length > 0 && (
+    <ol class="articles">
+      {articles.map((n) => (
+        <li>
+          <a href={entryUrl(n.entry)} aria-current={ariaCurrent(n)}>
+            {n.entry.data.title}
+          </a>
+          {n === current && <Outline headings={headings} />}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+<style>
+  ul,
+  ol {
+    margin: 0;
+  }
+
+  /* 目录：不编号，名称前用三角标出收起 ▸ / 展开 ▾ */
+  .folders {
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .folders > li > a::before {
+    content: '▸';
+    display: inline-block;
+    width: 1.1rem;
+    color: var(--color-muted);
+  }
+
+  .folders > li.open > a::before {
+    content: '▾';
+  }
+
+  /* 展开的目录里的下一层，与目录名对齐缩进 */
+  li > .folders,
+  li > .articles {
+    margin-left: 1.1rem;
+  }
+
+  /* 文章：按阅读顺序编号 */
+  .articles {
+    padding-left: 1.5rem;
+  }
+
+  .articles li::marker {
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  a {
+    display: block;
+    padding: 0.3rem 0;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-accent);
+  }
+
+  a[aria-current='page'] {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .count {
+    margin-left: 0.4rem;
+    font-size: 0.9em;
+    font-weight: normal;
+    color: var(--color-muted);
+  }
+</style>

@@ -1,16 +1,16 @@
 ---
-// 单条内容页面的布局：标题、日期、标签、正文；系列文章底部有上一篇/下一篇。
-// 所有栏目的内容页共用；栏目各自的差异通过两个插槽补充：
-//   slot="meta"   日期后面追加的信息（如对话对象）
+// 单条内容页面的布局：标题、日期、标签、正文；目录里的文章底部有上一篇/下一篇。
+// 所有栏目的内容页经 NodeLayout 使用；栏目各自的差异通过插槽补充：
+//   slot="meta"   日期后面追加的信息（如所在目录、对话对象）
 //   slot="intro"  标题区与正文之间的内容（如对话批注）
-//   slot="aside"  文章之前的内容（如技术理论的目录侧栏）
+//   slot="aside"  文章之前的内容（目录侧栏）
 import BaseLayout from './BaseLayout.astro';
 import '../styles/math.css';
 import { formatDate, entryUrl, type Entry } from '../utils';
 
 interface Props {
   entry: Entry;
-  /** 系列里的上一篇、下一篇。只有系列文章传入；不按日期给普通文章翻页（博客主人 2026-10-18） */
+  /** 同一目录里的上一篇、下一篇。不在目录里的文章不传，不按日期翻页（博客主人 2026-10-18） */
   prev?: Entry;
   next?: Entry;
   /** 加在正文容器上的额外 class，供栏目定制正文样式 */
@@ -26,7 +26,7 @@ const { title, description, date, updated, tags } = entry.data;
 ---
 
 <BaseLayout title={title} description={description} columnOverride={columnOverride} wide={wide}>
-  <div class:list={['entry', { wide }]}>
+  <div class="with-sidebar">
     <slot name="aside" />
     <div class="entry-main">
       <article>
@@ -82,16 +82,6 @@ const { title, description, date, updated, tags } = entry.data;
 </BaseLayout>
 
 <style>
-  /* 宽版面：侧栏一列、正文一列（列宽见 tokens.css 的 --measure-wide） */
-  @media (min-width: 68rem) {
-    .entry.wide {
-      display: grid;
-      grid-template-columns: 15rem minmax(0, 1fr);
-      column-gap: 3rem;
-      align-items: start;
-    }
-  }
-
   .entry-header {
     margin-bottom: 2.5rem;
   }
