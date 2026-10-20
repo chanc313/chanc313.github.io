@@ -44,7 +44,7 @@
 4. 新建 `src/pages/notes/index.astro` 与 `src/pages/notes/[...slug].astro`（复制 `posts/` 的，改集合名）
 5. `public/admin/config.yml`：加 `folder: src/content/notes` 的集合，字段与第 2 步一致
 
-导航、首页、标签、RSS、资源发布都从 `src/columns.ts` 读取，无需另改。不要让某个栏目独占首页或站点根级网址。栏目数量由博客主人控制（2026-10-18：文章、项目、技术理论），细分主题用标签或目录；不要为新主题主动提议开栏目。栏目本身不进目录树（2026-10-20 建议保持固定，等博客主人确认）。栏目特有的元信息与正文前内容，通过 `NodeLayout` 的 `meta`、`intro` 插槽在该栏目的 `[...slug].astro` 中补充（如 posts 的 `ai`、`note`）。`columns.ts` 的 `pinnedNav` 决定宽屏时目录侧栏是否常驻（只有项目为 true）。
+导航、首页、标签、RSS、资源发布都从 `src/columns.ts` 读取，无需另改。不要让某个栏目独占首页或站点根级网址。栏目数量由博客主人控制（2026-10-18：文章、项目、技术理论），细分主题用标签或目录；不要为新主题主动提议开栏目。栏目本身不进目录树，固定在 `src/columns.ts` 登记（博客主人 2026-10-20 选定）。栏目特有的元信息与正文前内容，通过 `NodeLayout` 的 `meta`、`intro` 插槽在该栏目的 `[...slug].astro` 中补充（如 posts 的 `ai`、`note`）。`columns.ts` 的 `pinnedNav` 决定宽屏时目录侧栏是否常驻（只有项目为 true）。
 
 ### 目录树
 
