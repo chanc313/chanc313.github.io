@@ -1,14 +1,16 @@
 ---
-// "技术理论"栏目首页：/theory/。与其他栏目不同，这里是话题的扁平列表（类似标签页），
-// 点进话题才看到文章目录
+// "技术理论"栏目首页：/theory/。与其他栏目不同，这里是话题（一级目录）的扁平列表（类似标签页），
+// 点进话题才看到文章目录；不在任何目录里的文章列在「未归入话题」
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import EntryIndex from '../../components/EntryIndex.astro';
 import WriteLink from '../../components/WriteLink.astro';
 import { getColumn } from '../../columns';
-import { getTheoryTree } from '../../utils';
+import { articlesUnder, entryUrl, getTree, indexItems, isFolder } from '../../utils';
 
 const column = getColumn('theory');
-const { trees, loose } = await getTheoryTree();
+const { roots } = await getTree('theory');
+const topics = roots.filter((n) => isFolder(n.entry));
+const loose = roots.filter((n) => !isFolder(n.entry));
 ---
 
 <BaseLayout title={column.label} description={column.description}>
@@ -16,10 +18,10 @@ const { trees, loose } = await getTheoryTree();
   <WriteLink href="/write/?column=theory" />
   <ul class="topic-list">
     {
-      trees.map(({ topic, count }) => (
+      topics.map((n) => (
         <li>
-          <a href={`/theory/${topic.id}/`}>{topic.data.title}</a>
-          <span>{count}</span>
+          <a href={entryUrl(n.entry)}>{n.entry.data.title}</a>
+          <span>{articlesUnder(n).length}</span>
         </li>
       ))
     }
@@ -28,7 +30,7 @@ const { trees, loose } = await getTheoryTree();
     loose.length > 0 && (
       <section class="loose">
         <h2>未归入话题</h2>
-        <EntryIndex entries={loose} />
+        <EntryIndex items={indexItems(loose)} />
       </section>
     )
   }

@@ -11,8 +11,9 @@ import { REPO } from '../consts';
 
 interface WriteData {
   columns: { id: string; label: string; path: string }[];
-  topics: { id: string; title: string; series: string[] }[];
-  projects: { id: string; title: string }[];
+  /** 各栏目的目录：id 是路径（如 ros/notes），label 是显示用的标题路径（如 ROS / 学习笔记） */
+  folders: Record<string, { id: string; label: string }[]>;
+  /** 各栏目已占用的页面路径 */
   taken: Record<string, string[]>;
 }
 
@@ -20,9 +21,8 @@ const data: WriteData = JSON.parse(document.getElementById('write-data')!.textCo
 const form = document.querySelector<HTMLFormElement>('[data-writer]')!;
 const field = <T extends Element>(name: string) => form.elements.namedItem(name) as unknown as T;
 const columnSel = field<HTMLSelectElement>('column');
-const topicSel = field<HTMLSelectElement>('topic');
-const seriesSel = field<HTMLSelectElement>('series');
-const projectSel = field<HTMLSelectElement>('project');
+const parentSel = field<HTMLSelectElement>('parent');
+const kindSel = field<HTMLSelectElement>('kind');
 const titleInput = field<HTMLInputElement>('title');
 const slugInput = field<HTMLInputElement>('slug');
 const tagsInput = field<HTMLInputElement>('tags');
@@ -49,43 +49,57 @@ if (!getToken()) {
   form.removeAttribute('hidden');
 }
 
-// ---------- 栏目、话题、系列、项目联动 ----------
+// ---------- 栏目、目录、类型联动 ----------
 
 for (const c of data.columns) columnSel.add(new Option(c.label, c.id));
-for (const t of data.topics) topicSel.add(new Option(t.title, t.id));
-for (const p of data.projects) projectSel.add(new Option(p.title, p.id));
 
-/** 系列选项只列当前话题下的系列 */
-function fillSeries(selected = '') {
-  seriesSel.length = 1; // 保留"单篇文章"
-  const topic = data.topics.find((t) => t.id === topicSel.value);
-  for (const s of topic?.series ?? []) seriesSel.add(new Option(s, s));
-  seriesSel.value = topic?.series.includes(selected) ? selected : '';
-  seriesSel.disabled = !topic || topic.series.length === 0;
+const column = () => data.columns.find((c) => c.id === columnSel.value)!;
+
+/** 新页面的完整路径（相对栏目），如 ros/notes/2026-10-20 */
+const pagePath = (slug = slugInput.value.trim()) => (parentSel.value ? `${parentSel.value}/${slug}` : slug);
+
+/** 目录选项只列当前栏目的目录 */
+function fillParents(selected = '') {
+  parentSel.length = 1; // 保留"栏目下"
+  const folders = data.folders[columnSel.value] ?? [];
+  for (const f of folders) parentSel.add(new Option(f.label, f.id));
+  parentSel.value = folders.some((f) => f.id === selected) ? selected : '';
 }
 
-function onColumnChange() {
-  const isTheory = columnSel.value === 'theory';
-  for (const el of form.querySelectorAll('[data-theory-only]')) el.toggleAttribute('hidden', !isTheory);
-  for (const el of form.querySelectorAll('[data-projects-only]')) el.toggleAttribute('hidden', columnSel.value !== 'projects');
-  const column = data.columns.find((c) => c.id === columnSel.value)!;
-  form.querySelector('[data-slug-prefix]')!.textContent = column.path;
+/** 位置变了：更新网址前缀，网址名没手动改过时重新生成 */
+function onPlaceChange() {
+  form.querySelector('[data-slug-prefix]')!.textContent = `${column().path}${parentSel.value ? `${parentSel.value}/` : ''}`;
+  if (!slugEdited) slugInput.value = defaultSlug();
+}
+
+const BODY_HINT = body.placeholder;
+const BODY_HINT_FOLDER = '目录简介，可不填。Markdown 格式';
+
+/** 新建目录时：显示说明，正文改为选填；目录不用日期做网址名，留空让人填 */
+function onKindChange() {
+  const isFolder = kindSel.value === 'folder';
+  form.querySelector('[data-folder-hint]')!.toggleAttribute('hidden', !isFolder);
+  body.placeholder = isFolder ? BODY_HINT_FOLDER : BODY_HINT;
   if (!slugEdited) slugInput.value = defaultSlug();
 }
 
 columnSel.addEventListener('change', () => {
-  onColumnChange();
+  fillParents();
+  onPlaceChange();
   saveDraft();
 });
-projectSel.addEventListener('change', saveDraft);
-topicSel.addEventListener('change', () => {
-  fillSeries();
+parentSel.addEventListener('change', () => {
+  onPlaceChange();
+  saveDraft();
+});
+kindSel.addEventListener('change', () => {
+  onKindChange();
   saveDraft();
 });
 
 // ---------- 网址名 ----------
 
-/** 用户是否手动改过网址名；没改过时随栏目切换自动更新 */
+/** 用户是否手动改过网址名；没改过时随栏目、目录切换自动更新 */
 let slugEdited = false;
 slugInput.addEventListener('input', () => (slugEdited = true));
 
@@ -94,26 +108,31 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-/** 默认网址名：当天日期，被占用时加序号，如 2026-10-18-2 */
+/** 默认网址名：文章用当天日期，在所选目录里被占用时加序号，如 2026-10-18-2；目录留空 */
 function defaultSlug() {
+  if (kindSel.value === 'folder') return '';
   const taken = data.taken[columnSel.value] ?? [];
   let slug = today();
-  for (let i = 2; taken.includes(slug); i++) slug = `${today()}-${i}`;
+  for (let i = 2; taken.includes(pagePath(slug)); i++) slug = `${today()}-${i}`;
   return slug;
 }
 
-/** 网址名只允许小写字母、数字和连字符（文件夹名只用 ASCII 的约定） */
+/**
+ * 网址名只允许小写字母、数字和连字符（文件夹名只用 ASCII 的约定）。
+ * 只填最后一段：放进哪个目录由「放在」决定，所以不能含斜杠
+ */
 function checkSlug(): string | null {
   const slug = slugInput.value.trim();
+  if (slug.includes('/')) return '网址只填最后一段，不能含斜杠。要放进目录，请在「放在」里选';
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) return '网址只能用小写英文字母、数字和连字符，如 ros2-topic';
-  if ((data.taken[columnSel.value] ?? []).includes(slug)) return `网址 ${slug} 已被使用，请换一个`;
+  if ((data.taken[columnSel.value] ?? []).includes(pagePath())) return `网址 ${pagePath()} 已被使用，请换一个`;
   return null;
 }
 
 // ---------- 自动存稿（文字存 localStorage，图片存 IndexedDB） ----------
 
 const DRAFT_KEY = 'write-draft';
-const textFields = { column: columnSel, topic: topicSel, series: seriesSel, project: projectSel, title: titleInput, slug: slugInput, tags: tagsInput, description: descInput, body };
+const textFields = { column: columnSel, parent: parentSel, kind: kindSel, title: titleInput, slug: slugInput, tags: tagsInput, description: descInput, body };
 
 function saveDraft() {
   const values: Record<string, string | boolean> = { draft: draftBox.checked, slugEdited };
@@ -170,7 +189,7 @@ async function clearDraft() {
   } catch {}
 }
 
-/** 打开页面时：恢复上次没发布的草稿；没有草稿时按网址参数预选栏目、话题、系列 */
+/** 打开页面时：恢复上次没发布的草稿；没有草稿时按网址参数预选栏目、目录、类型 */
 async function restore() {
   let saved: Record<string, string | boolean> | null = null;
   try {
@@ -180,23 +199,22 @@ async function restore() {
   const hasDraft = !!(saved && ((saved.title as string) || (saved.body as string)));
 
   if (hasDraft && saved) {
-    columnSel.value = saved.column as string;
-    topicSel.value = saved.topic as string;
-    fillSeries(saved.series as string);
-    projectSel.value = data.projects.some((p) => p.id === saved.project) ? (saved.project as string) : '';
+    if (data.columns.some((c) => c.id === saved.column)) columnSel.value = saved.column as string;
+    fillParents((saved.parent as string) ?? '');
+    kindSel.value = saved.kind === 'folder' ? 'folder' : 'article';
     for (const k of ['title', 'slug', 'tags', 'description', 'body'] as const) textFields[k].value = (saved[k] as string) ?? '';
     draftBox.checked = !!saved.draft;
     slugEdited = !!saved.slugEdited;
     await loadImages();
     setStatus('已恢复上次未发布的草稿');
   } else {
-    const column = params.get('column');
-    if (data.columns.some((c) => c.id === column)) columnSel.value = column!;
-    topicSel.value = data.topics.some((t) => t.id === params.get('topic')) ? params.get('topic')! : '';
-    fillSeries(params.get('series') ?? '');
-    projectSel.value = data.projects.some((p) => p.id === params.get('project')) ? params.get('project')! : '';
+    const id = params.get('column');
+    if (data.columns.some((c) => c.id === id)) columnSel.value = id!;
+    fillParents(params.get('parent') ?? '');
+    kindSel.value = params.get('kind') === 'folder' ? 'folder' : 'article';
   }
-  onColumnChange();
+  onPlaceChange();
+  onKindChange();
   autoGrow();
 }
 
@@ -439,16 +457,14 @@ const toBase64 = (blob: Blob) =>
  */
 function buildMarkdown() {
   const tags = tagsInput.value.split(/[,，、]/).map((t) => t.trim()).filter(Boolean);
-  const lines = [`title: ${JSON.stringify(titleInput.value.trim())}`, `date: ${today()}`];
+  const lines = [`title: ${JSON.stringify(titleInput.value.trim())}`];
+  if (kindSel.value === 'folder') lines.push('kind: folder');
+  lines.push(`date: ${today()}`);
   if (descInput.value.trim()) lines.push(`description: ${JSON.stringify(descInput.value.trim())}`);
   if (tags.length > 0) lines.push(`tags: ${JSON.stringify(tags)}`);
-  if (columnSel.value === 'theory' && topicSel.value) {
-    lines.push(`topic: ${topicSel.value}`);
-    if (seriesSel.value) lines.push(`series: ${JSON.stringify(seriesSel.value)}`);
-  }
-  if (columnSel.value === 'projects' && projectSel.value) lines.push(`project: ${projectSel.value}`);
   if (draftBox.checked) lines.push('draft: true');
-  return `---\n${lines.join('\n')}\n---\n\n${body.value.trim()}\n`;
+  const text = body.value.trim();
+  return `---\n${lines.join('\n')}\n---\n${text ? `\n${text}\n` : ''}`;
 }
 
 /**
@@ -488,40 +504,45 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   saveDraft();
   if (!titleInput.value.trim()) return setStatus('请填写标题', true);
-  if (!body.value.trim()) return setStatus('请填写正文', true);
+  const isFolder = kindSel.value === 'folder';
+  if (!isFolder && !body.value.trim()) return setStatus('请填写正文', true);
   const slugError = checkSlug();
   if (slugError) return setStatus(slugError, true);
 
-  const column = data.columns.find((c) => c.id === columnSel.value)!;
-  const slug = slugInput.value.trim();
-  const dir = `src/content/${column.id}/${slug}`;
+  const col = column();
+  const path = pagePath();
+  const dir = `src/content/${col.id}/${path}`;
 
   publishBtn.disabled = true;
   setStatus('正在发布…');
   try {
     // 再向 GitHub 确认一次这个网址没被占用（页面生成之后可能在后台新建过）
     const exists = await github(`/contents/${encodeURI(dir)}/index.md?ref=main`);
-    if (exists.ok) throw new Error(`网址 ${slug} 已被使用，请换一个`);
+    if (exists.ok) throw new Error(`网址 ${path} 已被使用，请换一个`);
 
-    await commit(dir, `新建 ${column.id}：${slug}`);
-    data.taken[column.id].push(slug);
+    await commit(dir, `新建 ${col.id}：${path}`);
+    data.taken[col.id].push(path);
+    // 新建的目录马上可以选：网站重新生成之前，写作页的目录列表里还没有它
+    if (isFolder) {
+      const parentLabel = parentSel.selectedIndex > 0 ? `${parentSel.selectedOptions[0].text} / ` : '';
+      data.folders[col.id].push({ id: path, label: parentLabel + titleInput.value.trim() });
+    }
     await clearDraft();
-    const url = `${column.path}${slug}/`;
+    const url = `${col.path}${path}/`;
     const wasDraft = draftBox.checked;
-    // 清空表单，但保留栏目、话题、系列、项目，方便接着写下一篇
-    const place = { column: columnSel.value, topic: topicSel.value, series: seriesSel.value, project: projectSel.value };
+    // 清空表单，但保留栏目和位置，方便接着写下一篇；刚建了目录，就接着在这个目录里写文章
+    const place = { column: columnSel.value, parent: isFolder ? path : parentSel.value };
     form.reset();
     columnSel.value = place.column;
-    topicSel.value = place.topic;
-    fillSeries(place.series);
-    projectSel.value = place.project;
+    fillParents(place.parent);
     slugEdited = false;
-    onColumnChange();
+    onPlaceChange();
+    onKindChange();
     autoGrow();
     statusEl.classList.remove('error');
     statusEl.innerHTML = wasDraft
       ? '已存为草稿，不会公开。之后可在后台修改并取消草稿'
-      : `已发布，约一分钟后可在 <a href="${url}">${url}</a> 看到`;
+      : `已发布，约一分钟后可在 <a href="${url}">${url}</a> 看到${isFolder ? '。现在可以接着在这个目录里写文章' : ''}`;
   } catch (err) {
     if (err instanceof AuthError) {
       statusEl.classList.add('error');
@@ -542,8 +563,9 @@ form.querySelector('[data-discard]')!.addEventListener('click', async () => {
   await clearDraft();
   form.reset();
   slugEdited = false;
-  fillSeries();
-  onColumnChange();
+  fillParents();
+  onPlaceChange();
+  onKindChange();
   autoGrow();
   setStatus('');
 });

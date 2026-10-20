@@ -1,10 +1,10 @@
 ---
-// "文章"栏目首页：/posts/
+// "文章"栏目首页：/posts/。目录算一项，点进去看目录里的文章
 import ColumnLayout from '../../layouts/ColumnLayout.astro';
 import { getColumn } from '../../columns';
-import { getEntries } from '../../utils';
+import { getTree, indexItems } from '../../utils';
 
-const entries = await getEntries('posts');
+const { roots } = await getTree('posts');
 ---
 
-<ColumnLayout column={getColumn('posts')} entries={entries} />
+<ColumnLayout column={getColumn('posts')} items={indexItems(roots)} />

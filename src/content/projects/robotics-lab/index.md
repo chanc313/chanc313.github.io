@@ -1,5 +1,6 @@
 ---
 title: Robotics-lab
+kind: folder
 date: 2026-10-19
 description: 一个长期维护、完全容器化的具身智能个人研究项目。起点是复现 NVIDIA Isaac Lab-Arena × GR00T N1.6 的 Unitree G1 移动操作 demo，后续会加入 ROS、控制核心和其他算法，实现全栈闭环。项目目前以仿真为主，也可能会调整机械结构。实现一套完整的embodied AI管线，让机器人自主感知环境、生成指令、执行动作，并从仿真逐渐向实际落地靠拢。开放式推进，终点不预设。
 tags:

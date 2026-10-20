@@ -1,0 +1,47 @@
+---
+// 当前页的小标题（只取二、三级），列在目录侧栏里当前页的下面，点击跳到对应位置
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const outline = Astro.props.headings.filter((h) => h.depth <= 3 && h.text.trim());
+---
+
+{
+  outline.length > 0 && (
+    <ul class="outline">
+      {outline.map((h) => (
+        <li class={`h${h.depth}`}>
+          <a href={`#${h.slug}`}>{h.text}</a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style>
+  /* 比页面标题小一号、颜色浅，三级标题再缩进一层 */
+  .outline {
+    margin: 0 0 0.5rem;
+    padding-left: 0.75rem;
+    list-style: none;
+    border-left: 1px solid var(--color-rule);
+  }
+
+  a {
+    display: block;
+    padding: 0.2rem 0;
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-accent);
+  }
+
+  .h3 {
+    padding-left: 0.9rem;
+  }
+</style>

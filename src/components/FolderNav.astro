@@ -1,5 +1,6 @@
 ---
-// 目录侧栏：技术理论的系列文章、项目的各页共用，列出同一系列（或同一项目）的全部页面。
+// 目录侧栏：目录里的页面（文章、有正文的目录）共用，列出所在一级目录（话题、项目）的目录树。
+// 当前页所在的各级目录展开，其他目录收起，见 FolderTree.astro。
 //
 // 宽屏：贴在窗口左边缘，平时只露出一个「目录」把手；鼠标移到把手上展开，移开收起，
 //       盖在正文上方，随页面滚动保持不动。点击把手可固定展开，再点一次、按 Esc 或点别处收起。
@@ -7,53 +8,38 @@
 // pinned（项目页用，配合 EntryLayout 的 wide）：窗口 ≥ 68rem 时作为正文左侧的一列常驻，
 //       随页面滚动停在顶部，不需要把手；更窄时与普通侧栏相同。
 import type { MarkdownHeading } from 'astro';
+import FolderTree from './FolderTree.astro';
+import Outline from './Outline.astro';
 import WriteLink from './WriteLink.astro';
-import { entryUrl, type Entry } from '../utils';
+import { entryUrl, isFolder, type TreeNode } from '../utils';
 
 interface Props {
-  /** 目录顶部的名称：系列名或项目名 */
-  name: string;
-  /** 按阅读顺序排好的页面 */
-  entries: Entry[];
-  /** 目录底部「续写」链接（只对登录过后台的浏览器显示） */
-  continueHref: string;
-  continueLabel: string;
+  /** 一级目录：侧栏顶部显示它的名称，下面是它的目录树 */
+  root: TreeNode;
+  /** 当前页 */
+  current: TreeNode;
+  /** 当前页的小标题，列在目录里当前页下面 */
+  headings?: MarkdownHeading[];
   /** 宽屏常驻展开 */
   pinned?: boolean;
-  /** 当前页的小标题，列在目录里当前页下面（只取二、三级标题） */
-  headings?: MarkdownHeading[];
 }
 
-const { name, entries, continueHref, continueLabel, pinned = false, headings = [] } = Astro.props;
-const outline = headings.filter((h) => h.depth <= 3 && h.text.trim());
-const path = Astro.url.pathname;
+const { root, current, headings = [], pinned = false } = Astro.props;
+const name = root.entry.data.title;
+// 底部「新建」链接（只对登录过后台的浏览器显示）：在当前页所在的目录里新建，当前页是目录时就在它里面
+const here = isFolder(current.entry) ? current : current.parent!;
+const writeHref = `/write/?${new URLSearchParams({ column: here.entry.collection, parent: here.entry.id })}`;
 ---
 
 <aside class:list={['toc', { pinned }]} data-toc>
   <button class="handle" type="button" aria-expanded="false" aria-controls="toc-panel">目录</button>
   <nav id="toc-panel" class="panel" aria-label={`「${name}」目录`}>
-    <p class="name">{name}</p>
-    <ol>
-      {
-        entries.map((e) => (
-          <li>
-            <a href={entryUrl(e)} aria-current={path === entryUrl(e) ? 'page' : undefined}>
-              {e.data.title}
-            </a>
-            {path === entryUrl(e) && outline.length > 0 && (
-              <ul class="outline">
-                {outline.map((h) => (
-                  <li class={`h${h.depth}`}>
-                    <a href={`#${h.slug}`}>{h.text}</a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))
-      }
-    </ol>
-    <p class="continue"><WriteLink href={continueHref} label={continueLabel} /></p>
+    <p class="name">
+      <a href={entryUrl(root.entry)} aria-current={root === current ? 'page' : undefined}>{name}</a>
+    </p>
+    {root === current && <Outline headings={headings} />}
+    <FolderTree nodes={root.children} current={current} headings={headings} />
+    <p class="continue"><WriteLink href={writeHref} label={`＋ 在「${here.entry.data.title}」里新建`} /></p>
   </nav>
 </aside>
 
@@ -91,51 +77,14 @@ const path = Astro.url.pathname;
     font-size: var(--text-lg);
   }
 
-  .panel ol {
-    margin: 0;
-    padding-left: 1.5rem;
-  }
-
-  .panel li::marker {
-    color: var(--color-muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .panel a {
-    display: block;
-    padding: 0.3rem 0;
+  .name a {
     color: var(--color-text);
     text-decoration: none;
   }
 
-  .panel a:hover {
+  .name a:hover,
+  .name a[aria-current='page'] {
     color: var(--color-accent);
-  }
-
-  .panel a[aria-current='page'] {
-    color: var(--color-accent);
-    font-weight: 600;
-  }
-
-  /* 当前页的小标题：比页面标题小一号、颜色浅，三级标题再缩进一层 */
-  .outline {
-    margin: 0 0 0.5rem;
-    padding-left: 0.75rem;
-    list-style: none;
-    border-left: 1px solid var(--color-rule);
-  }
-
-  .panel .outline a {
-    padding: 0.2rem 0;
-    color: var(--color-muted);
-  }
-
-  .panel .outline a:hover {
-    color: var(--color-accent);
-  }
-
-  .outline .h3 {
-    padding-left: 0.9rem;
   }
 
   .continue {

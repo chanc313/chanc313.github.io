@@ -34,6 +34,11 @@ collections:
     label_singular: 文章
     folder: src/content/posts
     path: '{{slug}}/index'
+    # 目录树：kind 为「目录」的页面里可以再放目录或文章，网址即文件夹路径（见 src/content.config.ts）。
+    # 新建时先在左侧进入目标目录，或在编辑页的上级文件夹里选；移动页面会改变它的网址
+    nested:
+      summary: '{{title}}'
+    meta: { path: { index_file: index } }
     media_folder: ''
     public_folder: ''
     extension: md
@@ -46,120 +51,97 @@ collections:
     summary: '{{title}}（{{date}}）'
     fields:
       - { name: title, label: 标题, widget: string }
+      - name: kind
+        label: 类型
+        widget: select
+        options: [{ label: 文章, value: article }, { label: 目录, value: folder }]
+        default: article
+        hint: 目录里可以再放目录或文章（如话题、项目、系列、章节）。目录的正文是简介，可不填；不填时目录页列出里面的内容
       - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
       - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
       - { name: tags, label: 标签, widget: list, required: false, default: [] }
       - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
-      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
+      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布；目录是草稿时，里面的页面也不发布 }
+      - { name: order, label: 排序, widget: number, value_type: int, required: false, hint: 只对目录有效：在上级目录里数字小的排在前面，不填按日期 }
       - { name: ai, label: 对话对象, widget: string, required: false, hint: 仅对话记录填写，如 Claude Opus 5.5 }
       - { name: note, label: 批注, widget: text, required: false, hint: 显示在正文之前，如这段对话为什么值得留下 }
       - name: body
         label: 正文
         widget: markdown
-        hint: 对话记录用单独一行的 @me 或 @ai 标记每段发言的开始
+        required: false
+        hint: 文章必填，目录可不填。对话记录用单独一行的 @me 或 @ai 标记每段发言的开始
 
   - name: projects
     label: 项目
-    label_singular: 项目
+    label_singular: 页面
     folder: src/content/projects
     path: '{{slug}}/index'
+    # 目录树：kind 为「目录」的页面里可以再放目录或文章，网址即文件夹路径（见 src/content.config.ts）。
+    # 新建时先在左侧进入目标目录，或在编辑页的上级文件夹里选；移动页面会改变它的网址
+    nested:
+      summary: '{{title}}'
+    meta: { path: { index_file: index } }
     media_folder: ''
     public_folder: ''
     extension: md
     format: frontmatter
     create: true
+    # 文件夹名在新建时手动填写（英文或拼音），保存后不可改，避免网址变化
     slug:
       editable: [create]
     sortable_fields: [date, title]
     summary: '{{title}}（{{date}}）'
     fields:
       - { name: title, label: 标题, widget: string }
-      # 留空即项目首页；选了项目即该项目下的一页。选项列出全部项目内容，请选项目首页，选错由构建报错
-      - name: project
-        label: 所属项目
-        widget: relation
-        collection: projects
-        value_field: '{{slug}}'
-        search_fields: [title]
-        display_fields: [title]
-        required: false
-        hint: 新项目留空（这一篇就是项目首页）；给已有项目加一页时选该项目
+      - name: kind
+        label: 类型
+        widget: select
+        options: [{ label: 文章, value: article }, { label: 目录, value: folder }]
+        default: article
+        hint: 目录里可以再放目录或文章（如话题、项目、系列、章节）。目录的正文是简介，可不填；不填时目录页列出里面的内容
       - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
       - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
       - { name: tags, label: 标签, widget: list, required: false, default: [] }
       - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
-      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
-      - { name: body, label: 正文, widget: markdown }
+      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布；目录是草稿时，里面的页面也不发布 }
+      - { name: order, label: 排序, widget: number, value_type: int, required: false, hint: 只对目录有效：在上级目录里数字小的排在前面，不填按日期 }
+      - { name: body, label: 正文, widget: markdown, required: false, hint: 文章必填，目录可不填 }
 
   - name: theory
     label: 技术理论
-    label_singular: 笔记
+    label_singular: 页面
     folder: src/content/theory
     path: '{{slug}}/index'
+    # 目录树：kind 为「目录」的页面里可以再放目录或文章，网址即文件夹路径（见 src/content.config.ts）。
+    # 新建时先在左侧进入目标目录，或在编辑页的上级文件夹里选；移动页面会改变它的网址
+    nested:
+      summary: '{{title}}'
+    meta: { path: { index_file: index } }
     media_folder: ''
     public_folder: ''
     extension: md
     format: frontmatter
     create: true
+    # 文件夹名在新建时手动填写（英文或拼音），保存后不可改，避免网址变化
     slug:
       editable: [create]
     sortable_fields: [date, title]
     summary: '{{title}}（{{date}}）'
     fields:
       - { name: title, label: 标题, widget: string }
-      # 话题与系列放在标题下方：技术理论的文章写作时最先要决定的就是放在哪
-      - name: topic
-        label: 话题
-        widget: relation
-        collection: topics
-        value_field: '{{slug}}'
-        search_fields: [title]
-        display_fields: [title]
-        required: false
-        hint: 不选则列在技术理论首页的「未归入话题」
-      - name: series
-        label: 系列
-        widget: relation
-        collection: topics
-        value_field: 'series.*.name'
-        display_fields: ['series.*.name']
-        search_fields: ['series.*.name']
-        required: false
-        hint: 单篇文章留空。选项是所有话题的系列，请选所属话题下的那个；新系列先在「技术理论话题」里添加
+      - name: kind
+        label: 类型
+        widget: select
+        options: [{ label: 文章, value: article }, { label: 目录, value: folder }]
+        default: article
+        hint: 目录里可以再放目录或文章（如话题、项目、系列、章节）。目录的正文是简介，可不填；不填时目录页列出里面的内容
       - { name: date, label: 发布日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', default: '{{now}}' }
       - { name: description, label: 摘要, widget: text, required: false, hint: 一句话，用于搜索引擎与 RSS }
       - { name: tags, label: 标签, widget: list, required: false, default: [] }
       - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
-      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布 }
-      - { name: body, label: 正文, widget: markdown }
-
-  # 技术理论的话题：网址为 /theory/<文件夹名>/，文件夹名不能与技术理论的文章重名
-  - name: topics
-    label: 技术理论话题
-    label_singular: 话题
-    folder: src/content/topics
-    path: '{{slug}}/index'
-    media_folder: ''
-    public_folder: ''
-    extension: md
-    format: frontmatter
-    create: true
-    slug:
-      editable: [create]
-    sortable_fields: [order, title]
-    summary: '{{title}}'
-    fields:
-      - { name: title, label: 名称, widget: string }
-      - { name: description, label: 简介, widget: text, required: false, hint: 一句话，用于搜索引擎，页面上不显示 }
-      - { name: order, label: 排序, widget: number, value_type: int, default: 0, required: false, hint: 数字小的排在前面 }
-      - name: series
-        label: 系列
-        widget: list
-        required: false
-        default: []
-        hint: 话题内的系列，如 学习笔记。添加后，写技术理论文章时可在「系列」下拉框中选择
-        fields:
-          - { name: name, label: 系列名, widget: string }
+      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布；目录是草稿时，里面的页面也不发布 }
+      - { name: order, label: 排序, widget: number, value_type: int, required: false, hint: 只对目录有效：在上级目录里数字小的排在前面，不填按日期 }
+      - { name: body, label: 正文, widget: markdown, required: false, hint: 文章必填，目录可不填 }
 
   - name: pages
     label: 独立页面
