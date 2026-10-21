@@ -62,7 +62,7 @@ const projects = defineCollection({
   schema: entry,
 });
 
-// 栏目：技术理论。话题（ROS、控制理论等）是一级目录，系列、章节是下面的子目录
+// 栏目：技术理论。话题（ROS、基础设施等）是一级目录，系列、章节是下面的子目录
 const theory = defineCollection({
   loader: bundles('./src/content/theory'),
   schema: entry,
