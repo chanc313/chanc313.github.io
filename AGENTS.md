@@ -115,6 +115,7 @@ Sveltia CMS，入口 `public/admin/index.html`（版本固定在脚本网址中�
 - 集合：各栏目与 `pages` 存为 `<folder>/{{slug}}/index.md`，`media_folder: ''` 使上传的素材进入页面文件夹；全站媒体库为 `public/shared/`。
 - 栏目集合是 Sveltia 的嵌套集合：`nested`（默认 `subfolders: true`，每个页面一个文件夹）+ `meta: { path: { index_file: index } }` + `path: '{{slug}}/index'`（`path` 的最后一段须与 `index_file` 一致）。新建时先在左侧进入目标目录；编辑页的上级文件夹选择器可移动页面（连同子页面和素材，一次提交），会改变网址。正文 `required: false`，因为目录可以没有正文。
 - slug 只在新建时可编辑，保存后不可改，避免网址变化。
+- 正文编辑器只开源码模式（各 `body` 字段 `modes: [raw]`）。富文本模式保存时会把 Markdown 重新序列化，不认识公式：下标的 `_` 被转义成 `\_`，`\\` 换行变成 `\`，`\,` 变成 `,`，公式渲染错乱（2026-10-31 博客主人在后台改 9-01、9-02 时发生）。要恢复富文本模式，先写一个保护公式的自定义编辑器组件，或在结构检查里拦截公式中的 `\_`。
 - 升级：改 `index.html` 中的版本号，在 `/admin/` 验证后提交，并更新 README 技术表中的版本。
 - `src/components/AdminLink.astro` 是临时入口：检查 localStorage 中是否有令牌来显示「后台」链接，不读取令牌本身。重做入口时整个删除该组件及 `Header.astro` 中的引用。
 

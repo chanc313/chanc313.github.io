@@ -68,6 +68,8 @@ collections:
       - name: body
         label: 正文
         widget: markdown
+        # 只用源码模式：富文本模式保存时会把公式改坏（\_、\\ 被改写，2026-10-31 出过事），见 AGENTS.md「内容管理后台」
+        modes: [raw]
         required: false
         hint: 文章必填，目录可不填。对话记录用单独一行的 @me 或 @ai 标记每段发言的开始
 
@@ -105,7 +107,7 @@ collections:
       - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布；目录是草稿时，里面的页面也不发布 }
       - { name: order, label: 排序, widget: number, value_type: int, required: false, hint: 只对目录有效：在上级目录里数字小的排在前面，不填按日期 }
-      - { name: body, label: 正文, widget: markdown, required: false, hint: 文章必填，目录可不填 }
+      - { name: body, label: 正文, widget: markdown, modes: [raw], required: false, hint: 文章必填，目录可不填 }
 
   - name: theory
     label: 技术理论
@@ -141,7 +143,7 @@ collections:
       - { name: updated, label: 更新日期, widget: datetime, time_format: false, format: 'YYYY-MM-DD', required: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会发布；目录是草稿时，里面的页面也不发布 }
       - { name: order, label: 排序, widget: number, value_type: int, required: false, hint: 只对目录有效：在上级目录里数字小的排在前面，不填按日期 }
-      - { name: body, label: 正文, widget: markdown, required: false, hint: 文章必填，目录可不填 }
+      - { name: body, label: 正文, widget: markdown, modes: [raw], required: false, hint: 文章必填，目录可不填 }
 
   - name: pages
     label: 独立页面
@@ -159,4 +161,4 @@ collections:
       - { name: title, label: 标题, widget: string }
       - { name: description, label: 摘要, widget: text, required: false }
       - { name: draft, label: 草稿, widget: boolean, default: false }
-      - { name: body, label: 正文, widget: markdown }
+      - { name: body, label: 正文, widget: markdown, modes: [raw] }

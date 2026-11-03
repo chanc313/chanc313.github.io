@@ -17,7 +17,7 @@ order: null
 
 ## 先说术语：连杆与构件
 
-中文术语有个坑。机器人学里，「连杆」（link）泛指机构里的每一个刚体，这门课一直这么用；机械原理里，刚体统称**构件**，「连杆」专指四连杆中间那根不接地的杆。整个装置称为**机构**，其中一个刚体叫构件
+中文术语有个坑。机器人学里，「连杆」（link）泛指机构里的每一个刚体，这门课一直这么用；机械原理里，刚体统称**构件**，「连杆」专指四连杆中间那根不接地的杆。整个装置称为**机构**，其中一个刚体叫构件。
 
 ![四连杆的四根杆，以及同一个曲柄角下的两组解](./fourbar.png)
 
@@ -37,8 +37,8 @@ order: null
 
 $$
 \begin{aligned}
-\mathrm{dof} &= m(N-1) - \sum\_{i=1}^{J} (m - f_i) \
-&= m(N - 1 - J) + \sum\_{i=1}^{J} f_i
+\mathrm{dof} &= m(N-1) - \sum_{i=1}^{J} (m - f_i) \\
+&= m(N - 1 - J) + \sum_{i=1}^{J} f_i
 \end{aligned}
 $$
 
@@ -123,7 +123,7 @@ Delta 机器人是同一类现象。上方的底座固定，三个电机装在�
 飞行器、腾空的人形机器人没有哪个连杆是固定的，$N$ 个连杆全都能动：
 
 $$
-\mathrm{dof} = m(N - J) + \sum\_{i=1}^{J} f_i
+\mathrm{dof} = m(N - J) + \sum_{i=1}^{J} f_i
 $$
 
 等价的看法：假想地面还在，用一个 $f = 6$ 的「自由关节」把躯干接到地面上，再照常用 Grübler。MuJoCo 的 free joint、Pinocchio 的 free-flyer 就是这个假想的关节，它占 7 个位置坐标（位置 3 个加四元数 4 个）、6 个速度坐标。四旋翼是一个刚体，6 个自由度，却只有 4 个电机，这叫欠驱动。腾空的人形机器人有 $6 + n$ 个自由度，$n$ 是关节数；一着地，脚和地面的接触就成了新的约束，9-04、9-05 会算。
@@ -144,7 +144,7 @@ $$
 
 $$
 \begin{aligned}
-l_1 \cos\theta + l_2 \cos\varphi &= a + l_3 \cos\psi \
+l_1 \cos\theta + l_2 \cos\varphi &= a + l_3 \cos\psi \\
 l_1 \sin\theta + l_2 \sin\varphi &= l_3 \sin\psi
 \end{aligned}
 $$
@@ -155,7 +155,7 @@ $$
 
 ![θ = 60° 时的两组解](./fourbar-two-modes.png)
 
-Q 是两个圆的交点：一个以曲柄末端 P 为圆心、半径 $l_2$，一个以 $O_B$ 为圆心、半径 $l_3$。两个交点关于直线 $PO_B$ 对称，所以同一个 $\theta$ 下的两组解互为镜像：三角形 $P,Q,O_B$ 沿 $PO_B$ 翻折。记 $d = |PO_B|$：
+Q 是两个圆的交点：一个以曲柄末端 P 为圆心、半径 $l_2$，一个以 $O_B$ 为圆心、半径 $l_3$。两个交点关于直线 $PO_B$ 对称，所以同一个 $\theta$ 下的两组解互为镜像：三角形 $P\,Q\,O_B$ 沿 $PO_B$ 翻折。记 $d = |PO_B|$：
 
 - $|l_2 - l_3| < d < l_2 + l_3$ 时有两个解；
 - 取等号时两解重合，连杆和摇杆共线，是奇异位形；
@@ -187,7 +187,7 @@ $l_1 = 1.8$ 时，如果每一步都从 $\theta = 0$ 的那组解出发，算出
 
 ## 来源
 
-- Kevin M. Lynch, Frank C. Park, \_Modern Robotics: Mechanics, Planning, and Control\_，2.2.2 节，例 2.3–2.8；作者官网有免费的[预印本](https://hades.mech.northwestern.edu/images/2/25/MR-v2.pdf)。
+- Kevin M. Lynch, Frank C. Park, *Modern Robotics: Mechanics, Planning, and Control*，2.2.2 节，例 2.3–2.8；作者官网有免费的[预印本](https://hades.mech.northwestern.edu/images/2/25/MR-v2.pdf)。
 - G. T. Bennett, "A New Mechanism," _Engineering_ 76, 1903.
 - C. Gosselin, J. Angeles, "Singularity Analysis of Closed-Loop Kinematic Chains," _IEEE Transactions on Robotics and Automation_ 6(3), 1990.
 - 机构示意图为学习时自绘；三张曲线图由我的 control-theory-lab 仓库里的四连杆求解脚本生成。
