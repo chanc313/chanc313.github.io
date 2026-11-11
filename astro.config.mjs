@@ -15,6 +15,8 @@ export default defineConfig({
   redirects: {
     '/chats/': '/tags/AI对话/',
     '/chats/site-capabilities/': '/posts/site-capabilities/',
+    // 「非线性控制」原是文章栏目的 /posts/1/，2026-11-11 重写后移到技术理论的「非线性控制」话题
+    '/posts/1/': '/theory/nonlinear-control/stability/',
   },
   integrations: [
     // 结构检查：栏目文件是否齐全、后台配置是否同步、独立页面名是否与已有网址冲突（说明见集成文件开头）
