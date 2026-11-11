@@ -7,7 +7,7 @@ tags:
   - 控制理论
 ---
 
-0.1 线性代数 · 单元 0-01 · 对照 Strang《Introduction to Linear Algebra》第 1–3 章，MIT 18.06（2010 春季）第 1、6、7、10 讲
+0.1 线性代数 · 单元 0-01 · 对照 Strang《Introduction to Linear Algebra》第 1–3、5 章，MIT 18.06（2010 春季）第 1、6、7、10、18、19 讲
 
 本篇整理矩阵作为线性映射的基本概念：Ax 的两种读法、乘法与复合、列空间、秩与零空间、行列式，最后分析人形机器人腿伸直时的运动学奇异。
 
@@ -107,7 +107,7 @@ q₂ = 0 时髋–踝连线与小腿重合，J₁ ∥ J₂：
 
 该构型下 J₁ 水平，沿腿方向的速度分量仅来自 J₂，大小为 l₂ sin(q₂/2)，故所需膝角速度为 v / (l₂ sin(q₂/2))。
 
-*基于 ZMP 的步行控制器通常使膝关节保持一定屈曲，原因之一是避开该奇异。6-01 的线性倒立摆假设质心高度不变，行走中髋–踝距离须持续变化，膝关节接近伸直时无法实现。*
+*基于 ZMP 的步行控制器通常使膝关节保持一定屈曲，原因之一是避开该奇异。6-01 的线性倒立摆假设质心高度不变，行走中髋–踝距离须持续变化：膝关节接近伸直时，所需膝角速度按 1/sin(q₂/2) 增大；完全伸直时，沿腿方向的运动在一阶上不可实现。*
 
 ### 5.4 线性化在奇异处的局限
 
@@ -125,6 +125,6 @@ q₂ = 0 时髋–踝连线与小腿重合，J₁ ∥ J₂：
 
 ## 来源
 
-- Gilbert Strang, *Introduction to Linear Algebra*，第 1–3 章（[作者的课程网站](https://math.mit.edu/~gs/linearalgebra/)）；MIT OCW [18.06 Linear Algebra（2010 春季）](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/)第 1、6、7、10 讲。
+- Gilbert Strang, *Introduction to Linear Algebra*，第 1–3、5 章（[作者的课程网站](https://math.mit.edu/~gs/linearalgebra/)）；MIT OCW [18.06 Linear Algebra（2010 春季）](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/)第 1、6、7、10、18、19 讲（行列式在第 5 章、第 18–19 讲）。
 - 3Blue1Brown，[线性代数的本质](https://www.3blue1brown.com/topics/linear-algebra)（Essence of Linear Algebra）前 7 集。
 - 5.3、5.4 节的数字：l₁ = l₂ = 0.4 m，q₁ = q₂/2，用 numpy 求解 J q̇ = (0, 0.1)；零空间步长取 (q₁, q₂) = (0.045, 0.089) rad。
