@@ -34,7 +34,7 @@ $$
 m l^2 \ddot\theta = \tau - b\dot\theta - m g l \sin\theta
 $$
 
-**建模假设**：刚体、质量集中于杆端、摩擦为粘性、电机力矩可以任意指定。每条假设都是一个模型误差来源，自适应控制与鲁棒控制处理的就是这些误差。
+**建模假设**：刚体、质量集中于杆端、摩擦为粘性、电机力矩可以任意指定。每条假设都是一个模型误差来源；自适应控制主要处理其中的参数误差，鲁棒控制处理有界的不确定性。
 
 ## 2 输入与输出
 
@@ -86,7 +86,7 @@ $$
 A = \begin{bmatrix} 0 & 1 \\ -\dfrac{g}{l}\cos\theta^* & -\dfrac{b}{ml^2} \end{bmatrix}, \qquad B = \begin{bmatrix} 0 \\ \dfrac{1}{ml^2} \end{bmatrix}
 $$
 
-*常见错误：把 sin x₁ 写成 (sin x₁/x₁)·x₁，再把 sin x₁/x₁ 当作偏导。这是状态相关系数（SDC）形式，不是雅可比。两者只在原点相等。*
+*常见错误：把 sin x₁ 写成 (sin x₁/x₁)·x₁，再把 sin x₁/x₁ 当作偏导。这是状态相关系数（SDC）形式，不是雅可比。两者在原点附近一致，离开原点一般不同。*
 
 ## 5 开环分析
 
@@ -109,13 +109,13 @@ $$
 
 C 是输出矩阵（y = Cx）。
 
-> **s 与 λ 的关系**。(sI − A)⁻¹ 的每个元素都以 det(sI − A) 为分母，所以 G(s) 的极点就是 det(sI − A) = 0 的根，即 A 的特征值。在时域中，设 x = v·e^{λt} 代入 ẋ = Ax，得 λv = Av，同一个结论。
+> **s 与 λ 的关系**。(sI − A)⁻¹ 的每个元素都以 det(sI − A) 为分母，所以 G(s) 的极点都是 det(sI − A) = 0 的根，即 A 的特征值。分子可能约掉分母的因子，因此极点一般只是特征值的子集；没有零极点相消（实现既可控又可观，即最小实现）时两者相同。在时域中，设 x = v·e^{λt} 代入 ẋ = Ax，得 λv = Av，同一个结论。
 >
 > 两者不是同一个对象：s 是取遍复平面的自变量，λ 是特定的几个根。它们共用同一个多项式，所以控制领域常把特征多项式直接写成关于 s 的形式。
 
 *单关节在 θ\* = 0：G(s) = 1/(s² + 0.5s + 9.81)，极点 −0.25 ± 3.12j，和上表一致。*
 
-**可控性**：线性化系统可控 ⇔ rank[B, AB, …, Aⁿ⁻¹B] = n。可控时，可以用状态反馈任意配置闭环特征值。
+**可控性**：线性化系统可控 ⇔ rank[B, AB, …, Aⁿ⁻¹B] = n。可控时，可以用状态反馈任意配置闭环特征值（K 为实矩阵，期望特征值须关于实轴对称，复数成共轭对）。
 
 *单关节：[B, AB] = [[0, 1], [1, −0.5]]，秩为 2，可控。*
 
@@ -129,7 +129,7 @@ C 是输出矩阵（y = Cx）。
 
 **f_cl 由控制律决定**：f_cl(x) = f(x, k(x, x_d))。对象 f 不变，每换一个控制律 k 得到一个不同的闭环，需重新分析。设计控制律即选择一个可分析、性质好的 f_cl。
 
-| 控制律 | 单关节形式 | 闭环（m = l = 1，e = θ_d − θ） |
+| 控制律 | 单关节形式 | 闭环 / 适用条件（m = l = 1，e = θ_d − θ） |
 |---|---|---|
 | PD | τ = K_p e − K_dθ̇ | θ̈ = K_p e − (K_d + b)θ̇ − g sin θ，平衡点不在 θ_d |
 | PD 加重力补偿 | τ = K_p e − K_dθ̇ + mgl sin θ | θ̈ = K_p e − (K_d + b)θ̇，平衡点在 θ_d |
@@ -165,5 +165,5 @@ C 是输出矩阵（y = Cx）。
 
 - Hassan K. Khalil, *Nonlinear Systems*，第 3 版，Prentice Hall，2002：1.1–1.2、4.1–4.3。
 - Rafael Kelly, Victor Santibáñez, Antonio Loría, [*Control of Robot Manipulators in Joint Space*](https://doi.org/10.1007/b135572)，Springer，2005，第 3–4 章（动力学模型及其性质）、第 6–7 章（PD、PD 加重力补偿）、第 10 章（计算力矩）。
-- Gene F. Franklin, J. David Powell, Abbas Emami-Naeini, *Feedback Control of Dynamic Systems*，第 7 章（状态空间设计）。
+- Gene F. Franklin, J. David Powell, Abbas Emami-Naeini, *Feedback Control of Dynamic Systems*，第 7 章（状态空间与传递函数）。
 - 数字：m = l = 1，b = 0.5，g = 9.81，用 numpy 求特征值。
