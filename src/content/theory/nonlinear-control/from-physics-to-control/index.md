@@ -164,6 +164,6 @@ C 是输出矩阵（y = Cx）。
 ## 来源
 
 - Hassan K. Khalil, *Nonlinear Systems*，第 3 版，Prentice Hall，2002：1.1–1.2、4.1–4.3。
-- Rafael Kelly, Victor Santibáñez, Antonio Loría, [*Control of Robot Manipulators in Joint Space*](https://doi.org/10.1007/b135572)，Springer，2005，第 4–5 章（动力学模型及其性质）、第 8–9 章（PD、PD 加重力补偿）、第 13 章（计算力矩）。
+- Rafael Kelly, Victor Santibáñez, Antonio Loría, [*Control of Robot Manipulators in Joint Space*](https://doi.org/10.1007/b135572)，Springer，2005，第 3–4 章（动力学模型及其性质）、第 6–7 章（PD、PD 加重力补偿）、第 10 章（计算力矩）。
 - Gene F. Franklin, J. David Powell, Abbas Emami-Naeini, *Feedback Control of Dynamic Systems*，第 7 章（状态空间设计）。
 - 数字：m = l = 1，b = 0.5，g = 9.81，用 numpy 求特征值。
